@@ -1,0 +1,4 @@
+# Build Folder
+build/*
+.idea/*
+/vscode/*
