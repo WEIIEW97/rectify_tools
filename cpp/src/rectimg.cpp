@@ -67,11 +67,34 @@ cv::Mat Kinit, cv::Mat K, cv::Mat R, cv::Mat imgOrig, std::string paraDir, std::
         // TODO...
 
         // ??? why would we do this?
-        if (pixRect_1.at<int>(0, 0) % scale != 0) {
-            pixRect_1.at<int>(0, 0) = pixRect_1.at<int>(0, 0) - 1;
+        int row_pixRect_1, col_pixRect_1;
+        row_pixRect_1 = pixRect_1.size[0];
+        col_pixRect_1 = pixRect_1.size[1];
+        if (row_pixRect_1 != 0 || col_pixRect_1 != 0) {
+            if (pixRect_1.at<int>(0, 0) % scale != 0) {
+                pixRect_1.at<int>(0, 0) = pixRect_1.at<int>(0, 0) - 1;
+            }
+            else if (pixRect_1.at<int>(0, 1) % scale != 0) {
+                pixRect_1.at<int>(0 ,1) = pixRect_1.at<int>(0 ,1) - 1;
+            }
         }
-        else if (pixRect_1.at<int>(0, 1) % scale != 0) {
-            pixRect_1.at<int>(0 ,1) = pixRect_1.at<int>(0 ,1) - 1;
+
+        if (row_pixRect_1 != 0 || col_pixRect_1 != 0) {
+            cv::Mat startPixRect = pixRect_1.rowRange(0, 1).clone(); // [0, 1) left closed right open.
+            cv::Mat pix = startPixRect;
+            for (int j=startPixRect.at<int>(0, 0); j<row_pixRect_1; j++) {
+                cv::Mat pixTmp_l = cv::Mat::ones(5, 1, CV_8U) * j;  // repmat(j, 5, 1)
+                cv::Mat pixTmp_r(5, 1, CV_8U);
+                pixTmp_r.at<int>(0, 0) = pix.at<int>(0, 1) - 2;
+                pixTmp_r.at<int>(1, 0) = pix.at<int>(0, 1) - 1;
+                pixTmp_r.at<int>(2, 0) = pix.at<int>(0, 1);
+                pixTmp_r.at<int>(3, 0) = pix.at<int>(0, 1) + 1;
+                pixTmp_r.at<int>(4, 0) = pix.at<int>(0, 1) + 2;
+
+                cv::Mat pixTmp;
+                cv::hconcat(pixTmp_l, pixTmp_r, pixTmp);
+                
+            }
         }
     }
 
