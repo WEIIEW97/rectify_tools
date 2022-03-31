@@ -15,7 +15,7 @@ cv::Mat RectImg(cv::Mat xOrig2Rect, cv::Mat yOrig2Rect, cv::Mat xRect2Orig, cv::
 cv::Mat Kinit, cv::Mat K, cv::Mat R, cv::Mat imgOrig, std::string paraDir, std::string whichOne, int scale) {
     cv::Mat imgRect = cv::Mat::zeros(image.rows, image.cols, CV_8UC3);
     
-    int useTable = 1;
+    int useTable = 1; 
     int draw = 0;
     int useNearest = 0;
 
@@ -55,5 +55,28 @@ cv::Mat Kinit, cv::Mat K, cv::Mat R, cv::Mat imgOrig, std::string paraDir, std::
             cv::transpose(pix_tmp, pix);
             pixRect_1 = Orig2Rect(pix, Kinit, KK_new, R, K);
         }
+
+        // ceiling operation for every pixRect_1 ???
+        for (int i=0; i<pixRect_1.size[0]; i++) {
+            for (int j=0; j<2; j++) {   // dimension is (N, 2)
+                pixRect_1.at<int>(i, j) = ceil(pixRect_1.at<int>(i, j)); // this may not work sice ceil(float num) but not ceil(int num)
+            }
+        }
+
+        // here is for cropping operation ... Not implemented
+        // TODO...
+
+        // ??? why would we do this?
+        if (pixRect_1.at<int>(0, 0) % scale != 0) {
+            pixRect_1.at<int>(0, 0) = pixRect_1.at<int>(0, 0) - 1;
+        }
+        else if (pixRect_1.at<int>(0, 1) % scale != 0) {
+            pixRect_1.at<int>(0 ,1) = pixRect_1.at<int>(0 ,1) - 1;
+        }
     }
+
+    cv::Mat pixAll_1;
+    cv::hconcat(xuuAllUse, yuuAllUse, pixAll_1);
+    
+    return imgRect;
 }

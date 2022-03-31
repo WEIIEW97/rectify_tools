@@ -1,15 +1,18 @@
+clc;
+clear;
+
 srcX = magic(10);
-imgX = src(1:8, :);
+imgX = srcX(1:8, :);
 [nr,nc] = size(imgX);
-scale = 2;
+scale = 1;
 yStep = scale;
 ySampled = (scale:yStep:nr)';
 if ySampled(end) ~= nr
     ySampled = [ySampled;nr];
 end
 srcY = magic(10);
-imgY = src(1:9, :);
-for ii = scale : scale: scale*(size(img,1) - 1)
+imgY = srcX(1:9, :);
+for ii = scale : scale: scale*(size(imgX,1) - 1)
     i = ii/scale;
     pixRect_1 = [srcX(ySampled(i):ySampled(i)+scale-1,:)' srcY(ySampled(i):ySampled(i)+scale-1,:)'];
     pixRect_1_tmp = zeros(size(pixRect_1,1)*scale,2);
@@ -18,3 +21,8 @@ for ii = scale : scale: scale*(size(img,1) - 1)
                 pixRect_1_tmp(2:scale:end,:) = pixRect_1(:,[2 2+scale]);
     end
 end
+
+% nc = 5;
+% for i = 1:nc
+%     disp(i)
+% end
