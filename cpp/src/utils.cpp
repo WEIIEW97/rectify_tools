@@ -100,3 +100,38 @@ cv::Mat Orig2Rect(cv::Mat pix, cv::Mat intrMatOld, cv::Mat intrMatNew, cv::Mat R
 	cv::transpose(pixRect, pixRect);	//pixRect转置
 	return pixRect;
 }
+
+// dec2bin inplementation
+std::string dec2bin(int in_num, int bits_num) {
+	std::string bin_str = "";
+	int i = 0;
+	while (in_num != 0) {
+		bin_str = (in_num % 2 == 0 ? "0" : "1") + bin_str;
+		in_num /= 2;
+		i++;
+	}
+	while (i < bits_num) {
+		bin_str = "0" + bin_str;
+		i++;
+	}
+	return bin_str;
+}
+
+// convert binary string to decimal
+int bin2dec(std::string bin_str) {
+	int dec_num = 0;
+	for (int i = 0; i < bin_str.length(); i++) {
+		dec_num += (bin_str[i] - '0') * pow(2, bin_str.length() - i - 1);
+	}
+	return dec_num;
+}
+
+//optical flow
+cv::Mat sparse2dense(int row, int col, cv::Mat sparseMat, cv::Mat sampleX, cv::Mat sampleY) {
+	cv::Mat denseMat(row, col, CV_64FC1);
+	denseMat.setTo(0);
+	for (int i = 0; i < sampleX.rows; i++) {
+		denseMat.at<double>(sampleX.at<double>(i, 0), sampleY.at<double>(i, 0)) = sparseMat.at<double>(i, 0);
+	}
+	return denseMat;
+}
