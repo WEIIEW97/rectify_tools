@@ -1,6 +1,7 @@
-#pragma once
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
+#include <tuple>
 #include <cmath>
 #include <vector>
 #include <string>
@@ -8,21 +9,28 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/eigen.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/any.hpp>
 
+
+#define SIGN_BIT         0x8000
+#define SIGN_BIT_IGNORE  0x7fff
 
 Eigen::MatrixXd normc(Eigen::MatrixXd x);
 
 // meshgrid method implemented by cv::repeat
 void meshgrid(const cv::Range &xgv, const cv::Range &ygv, cv::Mat &X, cv::Mat &Y);
 
-cv::Mat comp_distortion_oulu(cv::Mat xd, cv::Mat k);
-
-cv::Mat normalize_pixel(cv::Mat x_kk, cv::Mat fc, cv::Mat cc, cv::Mat kc, double alpha_c);
-
-cv::Mat Orig2Rect(cv::Mat pix, cv::Mat intrMatOld, cv::Mat intrMatNew, cv::Mat R, cv::Mat kc);
-
 std::string dec2bin(int in_num, int bits_num);
 
 int bin2dec(std::string bin_str);
 
-cv::Mat sparse2dense(int row, int col, cv::Mat sparseMat, cv::Mat sampleX, cv::Mat sampleY);
+int32_t double2fixed(double num, int frac_len);
+
+double fixed2double(int32_t num, int frac_len);
+
+int sub2ind(int w, int h, int rows, int cols);
+
+std::tuple<int, int> ind2sub(int w, int h, int ind);
+
+bool ismember(double num, std::vector<double> vec);

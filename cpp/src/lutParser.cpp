@@ -1,112 +1,118 @@
 #include "utils.h"
+#include "lutParser.h"
 
+
+typedef struct denseMap {
+    cv::Mat rawX;
+    cv::Mat rawY;
+    cv::Mat rectX;
+    cv::Mat rectY;
+} denseMap;
 
 // read lookup table file and input image file
-void lutParser(std::string lut_file, std::string input_image_file, int int_len, int frac_len) {
-    cv::Mat input_img = cv::imread(lut_file);
+void lutParser(std::string lut_file, std::string input_image_file, int int_len, int frac_len, cv::Mat& Raw2RectDenseMapX,
+                   cv::Mat& Raw2RectDenseMapY, cv::Mat& Rect2RawDenseMapX, cv::Mat& Rect2RawDenseMapY) {
+    cv::Mat input_img = cv::imread(input_image_file);
 
     cv::Mat rect_img;
-    int num, cnt = 0;
     std::vector<double> lut_info;
-    FILE *fp = fopen(lut_file.c_str(), "r");
-    if (fp == NULL) {
-        printf("open file error!\n");
-        return;
+    std::ifstream file(lut_file);
+    assert(file.is_open());
+    std::string line;
+    while (std::getline(file, line)) {
+        lut_info.push_back(std::stod(line));
     }
 
-    while (!std::feof(fp)) {
-        char line[1024];
-        num = std::stoi(fgets(line, 1024, fp));
-        cnt++;
-        lut_info.push_back(num);
-    }
 
-    fclose(fp);
     int index = 1;
     int col_num, row_num, max_diff;
-    col_num = lut_info[index++];
-    row_num = lut_info[index++];
-    if (row_num > col_num) max_diff = row_num;
-    else max_diff = col_num;
+    col_num = lut_info[1];
+    row_num = lut_info[2];
+    
+    max_diff = std::max(col_num, row_num);
 
     int rect2raw_sample_row_num, rect2raw_sample_col_num, raw2rect_sample_row_num, raw2rect_sample_col_num;
-    rect2raw_sample_row_num = lut_info[index++];
-    rect2raw_sample_col_num = lut_info[index++];
-    raw2rect_sample_row_num = lut_info[index++];
-    raw2rect_sample_col_num = lut_info[index++];
+    rect2raw_sample_row_num = lut_info[3];
+    rect2raw_sample_col_num = lut_info[4];
+    raw2rect_sample_row_num = lut_info[5];
+    raw2rect_sample_col_num = lut_info[6];
 
     index = 14;
     std::vector<double> raw2rectSampleX, raw2rectSampleY, rect2rawSampleX, rect2rawSampleY;
     // generate raw2rectsampleX from index to index + raw2rect_sample+col_num - 1
     for (int i = 0; i < raw2rect_sample_col_num; i++) {
-        raw2rectSampleX.push_back(lut_info[index++] / 2);
+        raw2rectSampleX.push_back(lut_info[index] / 2);
+        index++;
     }
-    index += raw2rect_sample_col_num;
+
 
     // generate raw2rectsampleY from index to index + raw2rect_sample+row_num - 1  
     for (int i = 0; i < raw2rect_sample_row_num; i++) {
-        raw2rectSampleY.push_back(lut_info[index++] / 2);
+        raw2rectSampleY.push_back(lut_info[index] / 2);
+        index++;
     }
-    index += raw2rect_sample_row_num;
+
 
     // find index raw2rectSampleX > 2*max_diff
-    for (int i = 0; i < raw2rectSampleX.size(); i++) {
-        if (raw2rectSampleX[i] > 2 * max_diff) {
-            raw2rectSampleX[i] = raw2rectSampleX[i] - pow(2, 14);
+    for (double & i : raw2rectSampleX) {
+        if (i > 2 * max_diff) {
+            i = i - pow(2, 14);
         }
     }
 
     // do the same for raw2rectSampleY
-    for (int i = 0; i < raw2rectSampleY.size(); i++) {
-        if (raw2rectSampleY[i] > 2 * max_diff) {
-            raw2rectSampleY[i] = raw2rectSampleY[i] - pow(2, 13);
+    for (double & i : raw2rectSampleY) {
+        if (i > 2 * max_diff) {
+            i = i - pow(2, 13);
         }
     }
 
     // if raw2rectSampleX < -max_diff, then make it to raw2rectSampleX + 2^14
-    for (int i = 0; i < raw2rectSampleX.size(); i++) {
-        if (raw2rectSampleX[i] < -max_diff) {
-            raw2rectSampleX[i] = raw2rectSampleX[i] + pow(2, 13);
+    for (double & i : raw2rectSampleX) {
+        if (i < -max_diff) {
+            i = i + pow(2, 13);
         }
     }
 
     // generate rect2rawSampleX from index to index + rect2raw_sample+col_num - 1
     for (int i = 0; i < rect2raw_sample_col_num; i++) {
-        rect2rawSampleX.push_back(lut_info[index++] / 2);
+        rect2rawSampleX.push_back(lut_info[index] / 2);
+        index++;
     }
-    index += rect2raw_sample_col_num;
+
 
     // generate rect2rawSampleY from index to index + rect2raw_sample+row_num - 1
     for (int i = 0; i < rect2raw_sample_row_num; i++) {
-        rect2rawSampleY.push_back(lut_info[index++] / 2);
+        rect2rawSampleY.push_back(lut_info[index] / 2);
+        index++;
     }
-    index += rect2raw_sample_row_num;
+
 
     // if rect2rawSampleX > 2 * max_diff, then make it to rect2rawSampleX - 2^14
-    for (int i = 0; i < rect2rawSampleX.size(); i++) {
-        if (rect2rawSampleX[i] > 2 * max_diff) {
-            rect2rawSampleX[i] = rect2rawSampleX[i] - pow(2, 14);
+    for (double & i : rect2rawSampleX) {
+        if (i > 2 * max_diff) {
+            i = i - pow(2, 14);
         }
     }
 
     // do the same for rect2rawSampleY but rect2rawSampleY - 2^13
-    for (int i = 0; i < rect2rawSampleY.size(); i++) {
-        if (rect2rawSampleY[i] > 2 * max_diff) {
-            rect2rawSampleY[i] = rect2rawSampleY[i] - pow(2, 13);
+    for (double & i : rect2rawSampleY) {
+        if (i > 2 * max_diff) {
+            i = i - pow(2, 13);
         }
     }
 
     // if rect2rawSampleX < -max_diff, then make it to rect2rawSampleX + 2^14
-    for (int i = 0; i < rect2rawSampleX.size(); i++) {
-        if (rect2rawSampleX[i] < -max_diff) {
-            rect2rawSampleX[i] = rect2rawSampleX[i] + pow(2, 13);
+    for (double & i : rect2rawSampleX) {
+        if (i < -max_diff) {
+            i = i + pow(2, 13);
         }
     }
 
     // do the same for rect2rawSampleY but rect2rawSampleY + 2^13
-    for (int i = 0; i < rect2rawSampleY.size(); i++) {
-        if (rect2rawSampleY[i] < -max_diff) {
-            rect2rawSampleY[i] = rect2rawSampleY[i] + pow(2, 13);
+    for (double & i : rect2rawSampleY) {
+        if (i < -max_diff) {
+            i = i + pow(2, 13);
         }
     }
 
@@ -121,12 +127,13 @@ void lutParser(std::string lut_file, std::string input_image_file, int int_len, 
     cv::transpose(rect2rawSampleX_mat, rect2rawSampleX_mat);
 
     // repeat raw2rectSampleX_mat with dimension (rect2raw_sample_row_num, 1)
-    cv::repeat(raw2rectSampleX_mat, rect2raw_sample_row_num, 1, raw2rectSampleX_mat);
-    cv::repeat(raw2rectSampleY_mat, 1, raw2rect_sample_col_num, raw2rectSampleY_mat);
+    cv::Mat raw2rectSample_x, raw2rectSample_y, rect2rawSample_x, rect2rawSample_y;
+    cv::repeat(raw2rectSampleX_mat, rect2raw_sample_row_num, 1, raw2rectSample_x);
+    cv::repeat(raw2rectSampleY_mat, 1, raw2rect_sample_col_num, raw2rectSample_y);
 
     // do the same for rect2rawSampleX_mat and rect2rawSampleY_mat
-    cv::repeat(rect2rawSampleX_mat, 1, rect2raw_sample_row_num, rect2rawSampleX_mat);
-    cv::repeat(rect2rawSampleY_mat, raw2rect_sample_col_num, 1, rect2rawSampleY_mat);
+    cv::repeat(rect2rawSampleX_mat, rect2raw_sample_row_num, 1, rect2rawSample_x);
+    cv::repeat(rect2rawSampleY_mat, 1, rect2raw_sample_col_num,  rect2rawSample_y);
 
     int raw2rect_int_len = int_len;
     int raw2rect_frac_len = frac_len;
@@ -134,60 +141,62 @@ void lutParser(std::string lut_file, std::string input_image_file, int int_len, 
     // generate raw2rect_delta_sample from index to index + raw2rect_sample_row_num * raw2rect_sample_col_num - 1
     std::vector<double> raw2rect_delta_sample;
     for (int i = 0; i < raw2rect_sample_row_num * raw2rect_sample_col_num; i++) {
-        raw2rect_delta_sample.push_back(lut_info[index++]);
+        raw2rect_delta_sample.push_back(lut_info[index]);
+        index++;
     }
 
     // apply dec2bin to raw2rect_delta_sample with raw2rect_world_len * 2 bits
     // convert to binary with raw2rect_world_len * 2bits
     std::vector<std::string> raw2rect_delta_sample_bin;
-    for (int i = 0; i < raw2rect_delta_sample.size(); i++) {
-        raw2rect_delta_sample_bin.push_back(dec2bin(int(raw2rect_delta_sample[i]), raw2rect_world_len * 2));
+    raw2rect_delta_sample_bin.reserve(raw2rect_delta_sample.size());
+    for (double i : raw2rect_delta_sample) {
+        raw2rect_delta_sample_bin.push_back(dec2bin(int(i), raw2rect_world_len * 2));
     }
     index += raw2rect_sample_row_num * raw2rect_sample_col_num;
 
     std::vector<double> raw2rect_delta_sample_x, raw2rect_delta_sample_y;
     // convert binary to decimal for raw2rec_delta_sample_bin
-    for (int i = 0; i < raw2rect_delta_sample_bin.size(); i++) {
-        int _len = raw2rect_delta_sample_bin[i].length();
+    for (auto & i : raw2rect_delta_sample_bin) {
+        int _len = i.length();
         // subsrting from 0 to raw2rect_world_len in raw2rect_delta_sample_bin
-        std::string _suby = raw2rect_delta_sample_bin[i].substr(0, raw2rect_world_len);
-        std::string _subx = raw2rect_delta_sample_bin[i].substr(raw2rect_world_len+1, _len);
+        std::string _suby = i.substr(0, raw2rect_world_len);
+        /* different compared to matlab, substr takes range of [a,b) */
+        std::string _subx = i.substr(raw2rect_world_len, _len);
         raw2rect_delta_sample_y.push_back(bin2dec(_suby) / pow(2, raw2rect_frac_len));
         raw2rect_delta_sample_x.push_back(bin2dec(_subx) / pow(2, raw2rect_frac_len));
     }
 
     // if raw2rect_delta_sample_y > 0.5*2^raw2rect_int_len-1, then make it to raw2rect_delta_sample_y - 2^raw2rect_int_len
-    for (int i = 0; i < raw2rect_delta_sample_y.size(); i++) {
-        if (raw2rect_delta_sample_y[i] > 0.5 * pow(2, raw2rect_int_len - 1)) {
-            raw2rect_delta_sample_y[i] = raw2rect_delta_sample_y[i] - pow(2, raw2rect_int_len);
+    for (double & i : raw2rect_delta_sample_y) {
+        if (i > 0.5 * pow(2, raw2rect_int_len - 1)) {
+            i = i - pow(2, raw2rect_int_len);
         }
     }
     // if raw2rect_delta_sample_x > 0.5*2^raw2rect_int_len-1, then make it to raw2rect_delta_sample_y - 2^raw2rect_int_len
-    for (int i = 0; i < raw2rect_delta_sample_x.size(); i++) {
+    for (double & i : raw2rect_delta_sample_x) {
        
-        if (raw2rect_delta_sample_x[i] > 0.5 * pow(2, raw2rect_int_len - 1)) {
-            raw2rect_delta_sample_x[i] = raw2rect_delta_sample_x[i] - pow(2, raw2rect_int_len);
+        if (i > 0.5 * pow(2, raw2rect_int_len - 1)) {
+            i = i - pow(2, raw2rect_int_len);
         }
     }
     // if raw2rect_delta_sample_y < -0.5*2^raw2rect_int_len, then make it to raw2rect_delta_sample_y + 2^raw2rect_int_len
-    for (int i = 0; i < raw2rect_delta_sample_y.size(); i++) {
-        if (raw2rect_delta_sample_y[i] < -0.5 * pow(2, raw2rect_int_len)) {
-            raw2rect_delta_sample_y[i] = raw2rect_delta_sample_y[i] + pow(2, raw2rect_int_len);
+    for (double & i : raw2rect_delta_sample_y) {
+        if (i < -0.5 * pow(2, raw2rect_int_len)) {
+            i = i + pow(2, raw2rect_int_len);
         }
     }
     // if raw2rect_delta_sample_x < -0.5*2^raw2rect_int_len, then make it to raw2rect_delta_sample_x + 2^raw2rect_int_len
-    for (int i = 0; i < raw2rect_delta_sample_x.size(); i++) {
-        if (raw2rect_delta_sample_x[i] < -0.5 * pow(2, raw2rect_int_len)) {
-            raw2rect_delta_sample_x[i] = raw2rect_delta_sample_x[i] + pow(2, raw2rect_int_len);
+    for (double & i : raw2rect_delta_sample_x) {
+        if (i < -0.5 * pow(2, raw2rect_int_len)) {
+            i = i + pow(2, raw2rect_int_len);
         }
     }
 
-    // convert vector to cv::Mat for raw2rect_delta_sample_y and raw2rect_delta_sample_x
-    cv::Mat raw2rect_delta_sample_x_mat(raw2rect_delta_sample_x.size(), 1, CV_64F, raw2rect_delta_sample_x.data());
-    cv::Mat raw2rect_delta_sample_y_mat(raw2rect_delta_sample_y.size(), 1, CV_64F, raw2rect_delta_sample_y.data());
+    /* attention: row and col should be reversed */
+    cv::Mat raw2rect_delta_samplex(raw2rect_sample_col_num, raw2rect_sample_row_num, CV_64F, raw2rect_delta_sample_x.data());
+    cv::Mat raw2rect_delta_sampley(raw2rect_sample_col_num, raw2rect_sample_row_num, CV_64F, raw2rect_delta_sample_y.data());
 
-    cv::Mat raw2rect_delta_samplex = raw2rect_delta_sample_x_mat.reshape(0, raw2rect_sample_row_num);   // Mat::reshape(int cn, int rows=0) const
-    cv::Mat raw2rect_delta_sampley = raw2rect_delta_sample_y_mat.reshape(0, raw2rect_sample_col_num);
+
 
 
     /**
@@ -198,75 +207,159 @@ void lutParser(std::string lut_file, std::string input_image_file, int int_len, 
     int rect2raw_frac_len = frac_len;
     int rect2raw_world_len = int_len + frac_len;
     std::vector<double> rect2raw_delta_sample;
-    for(int i = 0; i < rect2raw_sample_row_num * rect2raw_sample_col_num - 1; i++) {
-        rect2raw_delta_sample.push_back(lut_info[index++]);
+    for(int i = 0; i < rect2raw_sample_row_num * rect2raw_sample_col_num; i++) {
+        rect2raw_delta_sample.push_back(lut_info[index]);
+        index++;
     }
-    index += rect2raw_sample_row_num * rect2raw_sample_col_num;
+
 
     std::vector<std::string> rect2raw_delta_sample_bin;
-    for (int i = 0; i < rect2raw_delta_sample.size(); i++) {
-        rect2raw_delta_sample_bin.push_back(dec2bin(int(rect2raw_delta_sample[i]), rect2raw_world_len * 2));
-    }
+    rect2raw_delta_sample_bin.reserve(rect2raw_delta_sample.size());
+    for (double i : rect2raw_delta_sample) {
+            rect2raw_delta_sample_bin.push_back(dec2bin(int(i), rect2raw_world_len * 2));
+        }
 
     std::vector<double> rect2raw_delta_sample_x, rect2raw_delta_sample_y;
     // convert binary to decimal for rect2raw_delta_sample_bin
-    for (int i = 0; i < rect2raw_delta_sample_bin.size(); i++) {
-        int _len = rect2raw_delta_sample_bin[i].length();
-        // subsrting from 0 to raw2rect_world_len in raw2rect_delta_sample_bin
-        std::string _suby = rect2raw_delta_sample_bin[i].substr(0, rect2raw_world_len);
-        std::string _subx = rect2raw_delta_sample_bin[i].substr(rect2raw_world_len+1, _len);
+    for (auto & i : rect2raw_delta_sample_bin) {
+        int _len = i.length();
+        std::string _suby = i.substr(0, rect2raw_world_len);
+        std::string _subx = i.substr(rect2raw_world_len, _len);
         rect2raw_delta_sample_y.push_back(bin2dec(_suby) / pow(2, rect2raw_frac_len));
         rect2raw_delta_sample_x.push_back(bin2dec(_subx) / pow(2, rect2raw_frac_len));
     }
 
     // if rect2raw_delta_sample_y > 0.5 * 2^rect2raw_int_len-1, then make it to rect2raw_delta_sample_y - 2^rect2raw_int_len
-    for (int i = 0; i < rect2raw_delta_sample_y.size(); i++) {
-        if (rect2raw_delta_sample_y[i] > 0.5 * pow(2, rect2raw_int_len - 1)) {
-            rect2raw_delta_sample_y[i] = rect2raw_delta_sample_y[i] - pow(2, rect2raw_int_len);
+    for (double & i : rect2raw_delta_sample_y) {
+        if (i > 0.5 * pow(2, rect2raw_int_len - 1)) {
+            i = i - pow(2, rect2raw_int_len);
         }
     }
 
     // same for rect_raw_delta_sample_x
-    for (int i = 0; i < rect2raw_delta_sample_x.size(); i++) {
-        if (rect2raw_delta_sample_x[i] > 0.5 * pow(2, rect2raw_int_len - 1)) {
-            rect2raw_delta_sample_x[i] = rect2raw_delta_sample_x[i] - pow(2, rect2raw_int_len);
+    for (double & i : rect2raw_delta_sample_x) {
+        if (i > 0.5 * pow(2, rect2raw_int_len - 1)) {
+            i = i - pow(2, rect2raw_int_len);
         }
     }
 
     // if rect2raw_delta_sample_y < -0.5*2^rect2raw_int_len, then make it to rect2raw_delta_sample_y + 2^rect2raw_int_len
-    for (int i = 0; i < rect2raw_delta_sample_y.size(); i++) {
-        if (rect2raw_delta_sample_y[i] < -0.5 * pow(2, rect2raw_int_len)) {
-            rect2raw_delta_sample_y[i] = rect2raw_delta_sample_y[i] + pow(2, rect2raw_int_len);
+    for (double & i : rect2raw_delta_sample_y) {
+        if (i < -0.5 * pow(2, rect2raw_int_len)) {
+            i = i + pow(2, rect2raw_int_len);
         }
     }
 
     // same for rect_raw_delta_sample_x
-    for (int i = 0; i < rect2raw_delta_sample_x.size(); i++) {
-        if (rect2raw_delta_sample_x[i] < -0.5 * pow(2, rect2raw_int_len)) {
-            rect2raw_delta_sample_x[i] = rect2raw_delta_sample_x[i] + pow(2, rect2raw_int_len);
+    for (double & i : rect2raw_delta_sample_x) {
+        if (i < -0.5 * pow(2, rect2raw_int_len)) {
+            i = i + pow(2, rect2raw_int_len);
         }
     }
 
-    // convert vector to cv::Mat for rect2raw_dekta_sample_x and rect2raw_delta_sample_y
-    cv::Mat rect2raw_delta_sample_x_mat(rect2raw_delta_sample_x.size(), 1, CV_64F, rect2raw_delta_sample_x.data());
-    cv::Mat rect2raw_delta_sample_y_mat(rect2raw_delta_sample_y.size(), 1, CV_64F, rect2raw_delta_sample_y.data());
+    cv::Mat rect2raw_delta_samplex(rect2raw_sample_col_num, rect2raw_sample_row_num, CV_64F, rect2raw_delta_sample_x.data());
+    cv::Mat rect2raw_delta_sampley(rect2raw_sample_col_num, rect2raw_sample_row_num, CV_64F, rect2raw_delta_sample_y.data());
 
-    cv::Mat rect2raw_delta_samplex = rect2raw_delta_sample_x_mat.reshape(0, rect2raw_sample_row_num);
-    cv::Mat rect2raw_delta_sampley = rect2raw_delta_sample_y_mat.reshape(0, rect2raw_sample_col_num);
 
-    // convert vector to cv::Mat for raw2rectSampleX, raw2rectSampleY, rect2rawSampleX, rect2rawSampleY
-    cv::Mat raw2rectSamplex(raw2rect_sample_row_num, raw2rect_sample_col_num, CV_64F, raw2rectSampleX.data());
-    cv::Mat raw2rectSampley(raw2rect_sample_row_num, raw2rect_sample_col_num, CV_64F, raw2rectSampleY.data());
-    cv::Mat rect2rawSamplex(rect2raw_sample_row_num, rect2raw_sample_col_num, CV_64F, rect2rawSampleX.data());
-    cv::Mat rect2rawSampley(rect2raw_sample_row_num, rect2raw_sample_col_num, CV_64F, rect2rawSampleY.data());
+
+
+    /* need transpose */
+    cv::transpose(raw2rect_delta_samplex, raw2rect_delta_samplex);
+    cv::transpose(raw2rect_delta_sampley, raw2rect_delta_sampley);
+    cv::transpose(rect2raw_delta_samplex, rect2raw_delta_samplex);
+    cv::transpose(rect2raw_delta_sampley, rect2raw_delta_sampley);
 
 
     cv::Mat Raw2RectMapX, Raw2RectMapY, Rect2RawMapX, Rect2RawMapY;
-    cv::subtract(raw2rectSamplex, raw2rect_delta_samplex, Raw2RectMapX);
-    cv::subtract(raw2rectSampley, raw2rect_delta_sampley, Raw2RectMapY);
-    cv::subtract(rect2rawSamplex, rect2raw_delta_samplex, Rect2RawMapX);
-    cv::subtract(rect2rawSampley, rect2raw_delta_sampley, Rect2RawMapY);
+    cv::subtract(raw2rectSample_x, raw2rect_delta_samplex, Raw2RectMapX);
+    cv::subtract(raw2rectSample_y, raw2rect_delta_sampley, Raw2RectMapY);
+    cv::subtract(rect2rawSample_x, rect2raw_delta_samplex, Rect2RawMapX);
+    cv::subtract(rect2rawSample_y, rect2raw_delta_sampley, Rect2RawMapY);
+    std::cout << Raw2RectMapX << std::endl;
+
+
 
     int nr = row_num;
     int nc = col_num;
+    Raw2RectDenseMapX = sparse2dense(nr, nc/2, Raw2RectMapX, raw2rectSample_x, raw2rectSample_y);
+//    Raw2RectDenseMapY = sparse2dense(nr, nc/2, Raw2RectMapY, raw2rectSample_x, raw2rectSample_y);
+//    Rect2RawDenseMapX = sparse2dense(nr, nc, Rect2RawMapX, rect2rawSample_x, rect2rawSample_y);
+//    Rect2RawDenseMapY = sparse2dense(nr, nc, Rect2RawMapY, rect2rawSample_x, rect2rawSample_y);
+}
+
+
+
+cv::Mat sparse2dense(int row, int col, cv::Mat sparseMat, cv::Mat sampleX, cv::Mat sampleY) {
+	cv::Mat xAll, yAll;
+	meshgrid(cv::Range(1, col), cv::Range(1, row), xAll, yAll);
+    std::cout << "xAll rows: " << xAll.rows << std::endl;
+    std::cout << "yAll size: " << yAll.size() << std::endl;
+	cv::Mat XY;
+	cv::hconcat(xAll.reshape(0, row*col), yAll.reshape(0, row*col), XY);
+
+
+    // std::vector<boost::any> sparse_buffer, sample_buffer, dense_buffer;
+    double a0, a1, a2, a3;
+    double b0, b1, b2, b3;
+    double c0, c1, c2, c3, c4;
+    cv::Mat denseMat(row, col, CV_64F);
+	for (int i=0; i<sampleX.rows-1; i++) {
+		double markY = sampleY.at<double>(i, 0);
+		double markY_next = sampleY.at<double>(i+1, 0);
+		double dltY = markY_next - markY;
+		for (int j=0; j<sampleX.cols-1; j++) {
+			double markX = sampleX.at<double>(i, j);
+			double markX_next = sampleX.at<double>(i, j+1);
+			double dltX = markX_next - markX;
+			double dltXY = dltX * dltY;
+            for (int k=0; k<XY.rows; k++) {
+                if (XY.at<double>(k, 0) >= markX && XY.at<double>(k, 0) < markX_next && XY.at<double>(k, 1) >= markY && XY.at<double>(k, 1) < markY_next) {
+                    /* handle with sparseMat */
+                    a0 = num2fix(sparseMat.at<double>(i, j) / dltXY, 12);
+                    a1 = num2fix(sparseMat.at<double>(i, j+1) / dltXY, 12);
+                    a2 = num2fix(sparseMat.at<double>(i+1, j) / dltXY, 12);
+                    a3 = num2fix(sparseMat.at<double>(i+1, j+1) / dltXY, 12);
+//                    a0 = sparseMat.at<double>(i, j) / dltXY;
+//                    a1 = sparseMat.at<double>(i, j+1) / dltXY;
+//                    a2 = sparseMat.at<double>(i+1, j) / dltXY;
+//                    a3 = sparseMat.at<double>(i+1, j+1) / dltXY;
+
+
+
+
+
+                    /* handle with sample */
+                    b0 = (markX_next - XY.at<double>(k, 0)) * (markY_next - XY.at<double>(k, 1));
+                    b1 = (-markX + XY.at<double>(k, 0)) * (markY_next - XY.at<double>(k, 1));
+                    b2 = (markX_next - XY.at<double>(k, 0)) * (-markY + XY.at<double>(k, 1));
+                    b3 = (-markX + XY.at<double>(k, 0)) * (-markY + XY.at<double>(k, 1));
+
+
+                    /* handle with denseMat and apply bilinear interpolation */
+                    c0 = num2fix(a0*b0, 12);
+                    c1 = num2fix(a1*b1, 12);
+                    c2 = num2fix(a2*b2, 12);
+                    c3 = num2fix(a3*b3, 12);
+                    c4 = num2fix((c0+c1+c2+c3), 9);
+//                    c0 = a0*b0;
+//                    c1 = a1*b1;
+//                    c2 = a2*b2;
+//                    c3 = a3*b3;
+//                    c4 = (c0+c1+c2+c3);
+                    denseMat.at<double>(k) = c4;
+                }
+            }
+		}
+	}
+
+    return denseMat;
+}
+
+// convert float number to fixed point number then return as double
+double num2fix(double num, int frac_len) {
+    int32_t resf;
+    double resd;
+    resf = double2fixed(num, frac_len);
+    resd = fixed2double(resf, frac_len);
+    return resd;
 }

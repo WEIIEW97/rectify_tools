@@ -1,0 +1,10 @@
+# Build Folder
+/cpp/build
+/cpp/cmake-build-debug
+
+# Idea Folder
+/cpp/.idea
+/cpp/.vscode
+
+# matlab code
+/matlab
