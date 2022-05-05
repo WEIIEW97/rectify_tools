@@ -339,6 +339,22 @@ cv::Mat bilinear_remap(cv::Mat& img_rect, cv::Mat img_r, cv::Mat img_g, cv::Mat 
     }
 
     cv::Mat coeff1 = (1-final_xy_orig_frac.colRange(1, 2)).mul((1-final_xy_orig_frac.colRange(0, 1)));
-    cv::Mat coeff2 = 
+    cv::Mat coeff2 = (1-final_xy_orig_frac.colRange(1, 2)).mul(final_xy_orig_frac.colRange(0, 1));
+    cv::Mat coeff3 = (final_xy_orig_frac.colRange(1, 2)).mul((1-final_xy_orig_frac.colRange(0, 1)));
+    cv::Mat coeff4 = (final_xy_orig_frac.colRange(1, 2)).mul(final_xy_orig_frac.colRange(0, 1));
+
+    for (int i=0; i<coeff1.rows; i++) {
+        coeff1.at<double>(i, 0) = num2fix(coeff1.at<double>(i, 0), 9);
+    }
+    for (int i=0; i<coeff2.rows; i++) {
+        coeff2.at<double>(i, 0) = num2fix(coeff2.at<double>(i, 0), 9);
+    }
+    for (int i=0; i<coeff3.rows; i++) {
+        coeff3.at<double>(i, 0) = num2fix(coeff3.at<double>(i, 0), 9);
+    }
+    for (int i=0; i<coeff4.rows; i++) {
+        coeff4.at<double>(i, 0) = num2fix(coeff4.at<double>(i, 0), 9);
+    }
+    
 
 }
