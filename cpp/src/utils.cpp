@@ -58,14 +58,13 @@ int32_t double2fixed(double num, int frac_len) {
     int int_part = 2 << (frac_len - 1);
 
     if (num > 0) {
-		// after tons of experiments, should use ceiling when input is positive
-		// use flooring when input is negative. That is the matchest trial compared
-		// to matlab.
-        _buffer = std::ceil(num * int_part);
+		// after tons of experiments, should use flooring when input is positive
+		// use ceiling when input is negative.
+        _buffer = std::floor(num * int_part);
         res = (_buffer == int32_t(_buffer)) ? _buffer : (_buffer >> 31) ^ 0x7fff;
     } else if (num < 0) {
         num = -num;
-        _buffer = std::floor(num * int_part);
+        _buffer = std::ceil(num * int_part);
         res = (_buffer == int32_t(_buffer)) ? _buffer : (_buffer >> 31) ^ 0x7fff;
         res = res ^ SIGN_BIT;
     } else {
@@ -112,3 +111,20 @@ bool ismember(double num, std::vector<double> vec) {
 		return false;
 	}
 }
+
+
+void get_yuv(const std::string& yuv_file, int width, int height, cv::Mat& y, cv::Mat& u, cv::Mat& v) {
+    std::ifstream in_file(yuv_file, std::ios::binary);
+    if (!in_file.is_open()) {
+        std::cout << "Cannot open file: " << yuv_file << std::endl;
+        exit(1);
+    }
+    y.create(height, width, CV_8UC1);
+    u.create(height/2, width/2, CV_8UC1);
+    v.create(height/2, width/2, CV_8UC1);
+    in_file.read((char*)y.data, y.total() * y.elemSize());
+    in_file.read((char*)u.data, u.total() * u.elemSize());
+    in_file.read((char*)v.data, v.total() * v.elemSize());
+    in_file.close();
+}
+

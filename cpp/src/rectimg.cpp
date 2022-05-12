@@ -3,7 +3,7 @@
 #include "lutParser.h"
 
 
-cv::Mat rectImg(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect, cv::Mat xRect2Orig, cv::Mat yRect2Orig, const cv::Mat& image, const cv::Mat& imgOrig, int scale) {
+cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect, cv::Mat xRect2Orig, cv::Mat yRect2Orig, const cv::Mat& image, int scale) {
     cv::Mat img_rect = cv::Mat::zeros(image.rows, image.cols, CV_8UC3);
 
     const int nc = scale * image.rows;
@@ -305,7 +305,7 @@ cv::Mat rectImg(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect, cv::Mat xR
         ind.push_back(sub2ind(nr/scale, nc/scale, boost::any_cast<cv::Mat>(coordinate).at<int>(0)/scale, boost::any_cast<cv::Mat>(coordinate).at<int>(1)/scale));
     }
 
-
+    img_rect = bilinear_remap(img_rect, img_r, img_g, img_b, final_xy_orig_int, final_xy_orig_frac, ind);
 
     return img_rect;
 }
@@ -356,5 +356,77 @@ cv::Mat bilinear_remap(cv::Mat& img_rect, cv::Mat img_r, cv::Mat img_g, cv::Mat 
         coeff4.at<double>(i, 0) = num2fix(coeff4.at<double>(i, 0), 9);
     }
     
+    std::vector<double> coord1_r, coord2_r, coord3_r, coord4_r;
+//    for (int i=0; i<coeff1.rows; i++) {
+//        coord1_r.emplace_back(num2fix(coeff1.at<double>(i, 0) * double(img_r.at<uint8_t>(bilinear_ind1[i])), 9));
+//    }
+//    for (int i=0; i<coeff2.rows; i++) {
+//        coord2_r.emplace_back(num2fix(coeff2.at<double>(i, 0) * double(img_r.at<uint8_t>(bilinear_ind2[i])), 9));
+//    }
+//    for (int i=0; i<coeff3.rows; i++) {
+//        coord3_r.emplace_back(num2fix(coeff3.at<double>(i, 0) * double(img_r.at<uint8_t>(bilinear_ind3[i])), 9));
+//    }
+//    for (int i=0; i<coeff4.rows; i++) {
+//        coord4_r.emplace_back(num2fix(coeff4.at<double>(i, 0) * double(img_r.at<uint8_t>(bilinear_ind4[i])), 9));
+//    }
+    coordinate_generator(coord1_r, coeff1, img_r, bilinear_ind1, 9);
+    coordinate_generator(coord2_r, coeff2, img_r, bilinear_ind2, 9);
+    coordinate_generator(coord3_r, coeff3, img_r, bilinear_ind3, 9);
+    coordinate_generator(coord4_r, coeff4, img_r, bilinear_ind4, 9);
 
+
+
+    std::vector<double> coord1_g, coord2_g, coord3_g, coord4_g;
+//    for (int i=0; i<coeff1.rows; i++) {
+//        coord1_g.emplace_back(num2fix(coeff1.at<double>(i, 0) * double(img_g.at<uint8_t>(bilinear_ind1[i])), 9));
+//    }
+//    for (int i=0; i<coeff2.rows; i++) {
+//        coord2_g.emplace_back(num2fix(coeff2.at<double>(i, 0) * double(img_g.at<uint8_t>(bilinear_ind2[i])), 9));
+//    }
+//    for (int i=0; i<coeff3.rows; i++) {
+//        coord3_g.emplace_back(num2fix(coeff3.at<double>(i, 0) * double(img_g.at<uint8_t>(bilinear_ind3[i])), 9));
+//    }
+//    for (int i=0; i<coeff4.rows; i++) {
+//        coord4_g.emplace_back(num2fix(coeff4.at<double>(i, 0) * double(img_g.at<uint8_t>(bilinear_ind4[i])), 9));
+//    }
+    coordinate_generator(coord1_g, coeff1, img_g, bilinear_ind1, 9);
+    coordinate_generator(coord2_g, coeff2, img_g, bilinear_ind2, 9);
+    coordinate_generator(coord3_g, coeff3, img_g, bilinear_ind3, 9);
+    coordinate_generator(coord4_g, coeff4, img_g, bilinear_ind4, 9);
+
+
+
+    std::vector<double> coord1_b, coord2_b, coord3_b, coord4_b;
+//    for (int i=0; i<coeff1.rows; i++) {
+//        coord1_b.emplace_back(num2fix(coeff1.at<double>(i, 0) * double(img_b.at<uint8_t>(bilinear_ind1[i])), 9));
+//    }
+//    for (int i=0; i<coeff2.rows; i++) {
+//        coord2_b.emplace_back(num2fix(coeff2.at<double>(i, 0) * double(img_b.at<uint8_t>(bilinear_ind2[i])), 9));
+//    }
+//    for (int i=0; i<coeff3.rows; i++) {
+//        coord3_b.emplace_back(num2fix(coeff3.at<double>(i, 0) * double(img_b.at<uint8_t>(bilinear_ind3[i])), 9));
+//    }
+//    for (int i=0; i<coeff4.rows; i++) {
+//        coord4_b.emplace_back(num2fix(coeff4.at<double>(i, 0) * double(img_b.at<uint8_t>(bilinear_ind4[i])), 9));
+//    }
+    coordinate_generator(coord1_b, coeff1, img_b, bilinear_ind1, 9);
+    coordinate_generator(coord2_b, coeff2, img_b, bilinear_ind2, 9);
+    coordinate_generator(coord3_b, coeff3, img_b, bilinear_ind3, 9);
+    coordinate_generator(coord4_b, coeff4, img_b, bilinear_ind4, 9);
+
+
+    for (int i=0; i<ind.size(); i++) {
+        img_rect.at<uint8_t>(ind[i]) = floor(coord1_b[i] + coord2_b[i] + coord3_b[i] + coord4_b[i]);
+        img_rect.at<uint8_t>(num_pix+ind[i]) = floor(coord1_g[i] + coord2_g[i] + coord3_g[i] + coord4_g[i]);
+        img_rect.at<uint8_t>(2*num_pix+ind[i]) = floor(coord1_r[i] + coord2_r[i] + coord3_r[i] + coord4_r[i]);
+    }
+
+    return img_rect;
+}
+
+
+void coordinate_generator(std::vector<double>& vec, cv::Mat coeff, cv::Mat img_ch, std::vector<int> index, int frac_len) {
+    for (int i=0; i<coeff.rows; i++) {
+        vec.emplace_back(num2fix(coeff.at<double>(i, 0) * double(img_ch.at<uint8_t>(index[i])), frac_len));
+    }
 }
