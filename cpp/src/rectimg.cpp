@@ -271,7 +271,7 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
                     }
                     if (ismember(2, flag_tmp) &&
                         ((!ismember(1, flag_tmp) && !pix_holdup1.empty()) ||
-                         ((!ismember(0, flag_tmp) && !pix_holdup2.empty())))) {
+                         (!ismember(0, flag_tmp) && !pix_holdup2.empty()))) {
                         pix_write.push_back(pix_holdup1);
                         pix_write.push_back(pix_holdup2);
                         pix_holdup1.release();
@@ -294,8 +294,7 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
                     }
                     if (ismember(2, flag_tmp) &&
                         ((!ismember(3, flag_tmp) && !pix_holddown1.empty()) ||
-                         ((!ismember(4, flag_tmp) &&
-                           !pix_holddown2.empty())))) {
+                         (!ismember(4, flag_tmp) && !pix_holddown2.empty()))) {
                         pix_write.push_back(pix_holddown1);
                         pix_write.push_back(pix_holddown2);
                         pix_holddown1.release();
@@ -316,33 +315,50 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
                             pix = pixTmp.rowRange(3, 4);
                         }
                     }
-                }
+                } else
+                    continue;
             }
             // pix_left means pixels which are not being handled yet. Not the
             // left-hand side left.
-            cv::Mat pix_left;
-            pix_left.push_back(pix_holdup1);
-            pix_left.push_back(pix_holdup2);
-            pix_left.push_back(pix_holddown1);
-            pix_left.push_back(pix_holddown2);
+            //            cv::Mat pix_left;
+            //            pix_left.push_back(pix_holdup1);
+            //            pix_left.push_back(pix_holdup2);
+            //            pix_left.push_back(pix_holddown1);
+            //            pix_left.push_back(pix_holddown2);
 
             pix_write.push_back(pix_found);
-            if (!pix_left.empty()) {
-                pix_write.push_back(pix_left);
-            }
+            //    if (!pix_left.empty()) {
+            //        pix_write.push_back(pix_left);
+            //    }
+            //            std::cout << "pix_found size: " << pix_found.size() <<
+            //            std::endl;
         } else
             continue;
     }
 
-    std::vector<int> prop_idx;
+    // std::cout << pix_write << std::endl;
+
+    // test: exclude coordinates where < 5
+    cv::Mat pix_write_test;
     for (int i = 0; i < pix_write.rows; i++) {
+        if (pix_write.at<double>(i, 0) >= 5) {
+            pix_write_test.push_back(pix_write.row(i));
+        }
+    }
+
+    std::cout << pix_write_test << std::endl;
+
+    // test: try pix_write_test intead of pix_write.
+    // check row numbers.
+    std::vector<int> prop_idx;
+    for (int i = 0; i < pix_write_test.rows; i++) {
         if (pix_write.at<double>(i, 0) >= 0 &&
             pix_write.at<double>(i, 0) < nc &&
             pix_write.at<double>(i, 1) >= 0 &&
             pix_write.at<double>(i, 1) < nr) {
             prop_idx.push_back(
-                sub2ind_along_y(nr, nc, (int)pix_write.at<double>(i, 1),
-                                (int)pix_write.at<double>(i, 0)));
+                sub2ind_along_y(nr, nc, (int)pix_write_test.at<double>(i, 1),
+                                (int)pix_write_test.at<double>(i, 0)));
         }
     }
 
@@ -393,6 +409,7 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     std::vector<std::tuple<int, int>> coordinates;
     coordinates.reserve(final_idx.rows);
     for (int i = 0; i < final_idx.rows; i++) {
+        // use ind2sub here, not ind2sub_along_y
         coordinates.emplace_back(ind2sub(nr, nc, final_idx.at<int>(i)));
     }
 
@@ -405,7 +422,8 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     img_rect = bilinear_remap(img_rect, img_r, img_g, img_b, final_xy_orig_int,
                               final_xy_orig_frac, ind);
 
-    //    std::cout << img_rect << std::endl;
+    //    cv::Scalar rect_sum = sum(img_rect);
+    //    std::cout << rect_sum << std::endl;
 
     return img_rect;
 }
@@ -419,9 +437,10 @@ cv::Mat bilinear_remap(cv::Mat& img_rect, const cv::Mat& img_r,
     const int nc = img_r.cols;
     const int num_pix = nc * nr;
 
-    cv::Mat bilinear_pix_floor1 = final_xy_orig_int;
-    cv::Mat bilinear_pix_floor2, bilinear_pix_floor3, bilinear_pix_floor4;
+    cv::Mat bilinear_pix_floor1, bilinear_pix_floor2, bilinear_pix_floor3,
+        bilinear_pix_floor4;
 
+    bilinear_pix_floor1 = final_xy_orig_int;
     cv::hconcat(final_xy_orig_int.colRange(0, 1) + 1,
                 final_xy_orig_int.colRange(1, 2), bilinear_pix_floor2);
     cv::hconcat(final_xy_orig_int.colRange(0, 1),
@@ -496,11 +515,11 @@ cv::Mat bilinear_remap(cv::Mat& img_rect, const cv::Mat& img_r,
 
     for (int i = 0; i < ind.size(); i++) {
         img_rect.at<uint8_t>(ind[i]) =
-            cvFloor(coord1_b[i] + coord2_b[i] + coord3_b[i] + coord4_b[i]);
+            floor(coord1_b[i] + coord2_b[i] + coord3_b[i] + coord4_b[i]);
         img_rect.at<uint8_t>(num_pix + ind[i]) =
-            cvFloor(coord1_g[i] + coord2_g[i] + coord3_g[i] + coord4_g[i]);
+            floor(coord1_g[i] + coord2_g[i] + coord3_g[i] + coord4_g[i]);
         img_rect.at<uint8_t>(2 * num_pix + ind[i]) =
-            cvFloor(coord1_r[i] + coord2_r[i] + coord3_r[i] + coord4_r[i]);
+            floor(coord1_r[i] + coord2_r[i] + coord3_r[i] + coord4_r[i]);
     }
     img_rect = img_rect.t();
     img_rect = img_rect.reshape(0, nc).t();

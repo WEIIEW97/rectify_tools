@@ -128,18 +128,18 @@ bool ismember(double num, std::vector<double> vec) {
 
 void get_yuv(const std::string& yuv_file, int width, int height, cv::Mat& y,
              cv::Mat& u, cv::Mat& v) {
-    std::ifstream in_file(yuv_file, std::ios::binary);
-    if (!in_file.is_open()) {
+    std::ifstream file(yuv_file, std::ios::binary);
+    if (!file.is_open()) {
         std::cout << "Cannot open file: " << yuv_file << std::endl;
         exit(1);
     }
     y.create(height, width, CV_8UC1);
     u.create(height / 2, width / 2, CV_8UC1);
     v.create(height / 2, width / 2, CV_8UC1);
-    in_file.read((char*)y.data, y.total() * y.elemSize());
-    in_file.read((char*)u.data, u.total() * u.elemSize());
-    in_file.read((char*)v.data, v.total() * v.elemSize());
-    in_file.close();
+    file.read((char*)y.data, y.total() * y.elemSize());
+    file.read((char*)u.data, u.total() * u.elemSize());
+    file.read((char*)v.data, v.total() * v.elemSize());
+    file.close();
 }
 
 std::string type2str(int type) {
