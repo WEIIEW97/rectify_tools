@@ -5,13 +5,13 @@
 int main() {
     std::string lut_file =
         "/Users/williamwei/Codes/rectify_tools/rectify_tools/cpp/data/case3/"
-        "output/LutDecL_640_400.txt";
-    std::string input_image_file =
-        "/Users/williamwei/Codes/rectify_tools/rectify_tools/cpp/data/case3/"
-        "imgL/IR-left-2022-4-8-18-28-20-654-1-996-57660643.bmp";
+        "output/LutDecR_640_400.txt";
     std::string yuv_path =
         "/Users/williamwei/Codes/rectify_tools/rectify_tools/cpp/data/case3/"
-        "output/rectL_996.yuv";
+        "output/rectR_996.yuv";
+    std::string output_image_file =
+        "/Users/williamwei/Codes/rectify_tools/rectify_tools/cpp/data/case3/"
+        "output/rectR_cpp1.png";
     const int int_len = 9;
     const int frac_len = 5;
     cv::Mat Raw2RectDenseMapX, Raw2RectDenseMapY, Rect2RawDenseMapX,
@@ -30,5 +30,7 @@ int main() {
     cv::imshow("y_rect", y_rect);
     cv::waitKey(0);
     cv::destroyAllWindows();
+    std::vector<int> compression_params = {0};
+    cv::imwrite(output_image_file, y_rect, compression_params);
     return 0;
 }

@@ -1,5 +1,4 @@
 #include "lutParser.h"
-
 #include "utils.h"
 
 typedef struct denseMap {
@@ -68,6 +67,12 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
 
     for (double& i : raw2rectSampleX) {
         if (i < -max_diff) {
+            i = i + thr1;
+        }
+    }
+
+    for (double& i : raw2rectSampleY) {
+        if (i < -max_diff) {
             i = i + thr2;
         }
     }
@@ -96,7 +101,7 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
 
     for (double& i : rect2rawSampleX) {
         if (i < -max_diff) {
-            i = i + thr2;
+            i = i + thr1;
         }
     }
 
@@ -133,7 +138,7 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
 
     int raw2rect_int_len = int_len;
     int raw2rect_frac_len = frac_len;
-    int raw2rect_world_len = int_len + frac_len;
+    int raw2rect_world_len = raw2rect_int_len + raw2rect_frac_len;
 
     std::vector<double> raw2rect_delta_sample;
     for (int i = 0; i < raw2rect_sample_row_num * raw2rect_sample_col_num;
@@ -203,8 +208,10 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
      **/
     // get the length of int and frac
     int rect2raw_int_len = int_len;
+    // why we do this?????????????????????????????/
+    if (int_len == 9) rect2raw_int_len = 8;
     int rect2raw_frac_len = frac_len;
-    int rect2raw_world_len = int_len + frac_len;
+    int rect2raw_world_len = rect2raw_int_len + rect2raw_frac_len;
     std::vector<double> rect2raw_delta_sample;
     for (int i = 0; i < rect2raw_sample_row_num * rect2raw_sample_col_num;
          i++) {
@@ -267,6 +274,8 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
     cv::transpose(raw2rect_delta_sampley, raw2rect_delta_sampley);
     cv::transpose(rect2raw_delta_samplex, rect2raw_delta_samplex);
     cv::transpose(rect2raw_delta_sampley, rect2raw_delta_sampley);
+
+//    std::cout << rect2raw_delta_samplex << std::endl;
 
     cv::Mat Raw2RectMapX, Raw2RectMapY, Rect2RawMapX, Rect2RawMapY;
     cv::subtract(raw2rectSample_x, raw2rect_delta_samplex, Raw2RectMapX);
