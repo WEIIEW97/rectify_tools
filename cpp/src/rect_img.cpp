@@ -1,6 +1,6 @@
-#include "rectImg.h"
+#include "rect_img.h"
 
-#include "lutParser.h"
+#include "lut_parser.h"
 #include "utils.h"
 
 cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
@@ -23,7 +23,10 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     for (int i = 0; i < y_size; i++) {
         y_sampled.emplace_back(scale + scale * i - 1);
     }
-    if (y_sampled.back() != nr - 1) y_sampled.push_back(nr - 1);
+    
+    if (y_sampled.back() != nr - 1) {
+        y_sampled.push_back(nr - 1);
+    }
 
     // TODO: add crop here
 
@@ -365,6 +368,12 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
 
     // test: try pix_write_test intead of pix_write.
     // check row numbers.
+
+    // save pix_write to .csv
+    const std::string check =
+        "/Users/williamwei/Codes/rectify_tools/rectify_tools/cpp/data/case3/"
+        "output/pix_write.csv";
+    write_csv(check, pix_write);
     std::vector<int> prop_idx;
     for (int i = 0; i < pix_write.rows; i++) {
         if (pix_write.at<double>(i, 0) >= 0 &&
@@ -507,19 +516,19 @@ cv::Mat bilinear_remap(cv::Mat& img_rect, const cv::Mat& img_r,
         coeff4.at<double>(i, 0) = num2fix_unsigned(coeff4.at<double>(i, 0), 9);
     }
 
-     std::vector<double> coord1_r, coord2_r, coord3_r, coord4_r;
+    std::vector<double> coord1_r, coord2_r, coord3_r, coord4_r;
 
-     coordinate_generator(coord1_r, coeff1, img_r, bilinear_ind1, 9);
-     coordinate_generator(coord2_r, coeff2, img_r, bilinear_ind2, 9);
-     coordinate_generator(coord3_r, coeff3, img_r, bilinear_ind3, 9);
-     coordinate_generator(coord4_r, coeff4, img_r, bilinear_ind4, 9);
+    coordinate_generator(coord1_r, coeff1, img_r, bilinear_ind1, 9);
+    coordinate_generator(coord2_r, coeff2, img_r, bilinear_ind2, 9);
+    coordinate_generator(coord3_r, coeff3, img_r, bilinear_ind3, 9);
+    coordinate_generator(coord4_r, coeff4, img_r, bilinear_ind4, 9);
 
-     std::vector<double> coord1_g, coord2_g, coord3_g, coord4_g;
+    std::vector<double> coord1_g, coord2_g, coord3_g, coord4_g;
 
-     coordinate_generator(coord1_g, coeff1, img_g, bilinear_ind1, 9);
-     coordinate_generator(coord2_g, coeff2, img_g, bilinear_ind2, 9);
-     coordinate_generator(coord3_g, coeff3, img_g, bilinear_ind3, 9);
-     coordinate_generator(coord4_g, coeff4, img_g, bilinear_ind4, 9);
+    coordinate_generator(coord1_g, coeff1, img_g, bilinear_ind1, 9);
+    coordinate_generator(coord2_g, coeff2, img_g, bilinear_ind2, 9);
+    coordinate_generator(coord3_g, coeff3, img_g, bilinear_ind3, 9);
+    coordinate_generator(coord4_g, coeff4, img_g, bilinear_ind4, 9);
 
     std::vector<double> coord1_b, coord2_b, coord3_b, coord4_b;
 
@@ -531,10 +540,10 @@ cv::Mat bilinear_remap(cv::Mat& img_rect, const cv::Mat& img_r,
     for (int i = 0; i < ind.size(); i++) {
         img_rect.at<uint8_t>(ind[i]) =
             floor(coord1_b[i] + coord2_b[i] + coord3_b[i] + coord4_b[i]);
-         img_rect.at<uint8_t>(num_pix + ind[i]) =
-             floor(coord1_g[i] + coord2_g[i] + coord3_g[i] + coord4_g[i]);
-         img_rect.at<uint8_t>(2 * num_pix + ind[i]) =
-             floor(coord1_r[i] + coord2_r[i] + coord3_r[i] + coord4_r[i]);
+        img_rect.at<uint8_t>(num_pix + ind[i]) =
+            floor(coord1_g[i] + coord2_g[i] + coord3_g[i] + coord4_g[i]);
+        img_rect.at<uint8_t>(2 * num_pix + ind[i]) =
+            floor(coord1_r[i] + coord2_r[i] + coord3_r[i] + coord4_r[i]);
     }
     // img_rect = img_rect.t();
     // img_rect = img_rect.reshape(0, nc).t();

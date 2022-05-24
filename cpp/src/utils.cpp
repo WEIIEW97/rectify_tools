@@ -118,6 +118,7 @@ std::tuple<int, int> ind2sub_along_y(int w, int h, int ind) {
     return std::make_tuple(rows, cols);
 }
 
+// check an element if it is in a vector
 bool ismember(double num, std::vector<double> vec) {
     if (std::binary_search(vec.begin(), vec.end(), num)) {
         return true;
@@ -126,6 +127,7 @@ bool ismember(double num, std::vector<double> vec) {
     }
 }
 
+// extract y, u, v channels respectivily from a 3-channel image
 void get_yuv(const std::string& yuv_file, int width, int height, cv::Mat& y,
              cv::Mat& u, cv::Mat& v) {
     std::ifstream file(yuv_file, std::ios::binary);
@@ -142,6 +144,7 @@ void get_yuv(const std::string& yuv_file, int width, int height, cv::Mat& y,
     file.close();
 }
 
+// get opencv mat type name
 std::string type2str(int type) {
     std::string r;
 
@@ -179,4 +182,12 @@ std::string type2str(int type) {
     r += (chans + '0');
 
     return r;
+}
+
+// write cv::Mat to .csv
+void write_csv(std::string file, cv::Mat m) {
+    std::ofstream f;
+    f.open(file.c_str());
+    f << cv::format(m, cv::Formatter::FMT_CSV) << std::endl;
+    f.close();
 }

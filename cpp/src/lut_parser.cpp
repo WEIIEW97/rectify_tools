@@ -1,4 +1,4 @@
-#include "lutParser.h"
+#include "lut_parser.h"
 #include "utils.h"
 
 typedef struct denseMap {

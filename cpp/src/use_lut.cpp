@@ -1,15 +1,15 @@
-#include "lutParser.h"
-#include "rectImg.h"
+#include "lut_parser.h"
+#include "rect_img.h"
 #include "utils.h"
 
 int main() {
-    std::string lut_file =
+    const std::string lut_file =
         "/Users/williamwei/Codes/rectify_tools/rectify_tools/cpp/data/case3/"
         "output/LutDecR_640_400.txt";
-    std::string yuv_path =
+    const std::string yuv_path =
         "/Users/williamwei/Codes/rectify_tools/rectify_tools/cpp/data/case3/"
         "output/rectR_996.yuv";
-    std::string output_image_file =
+    const std::string output_image_file =
         "/Users/williamwei/Codes/rectify_tools/rectify_tools/cpp/data/case3/"
         "output/rectR_cpp1.png";
     const int int_len = 9;
@@ -30,7 +30,7 @@ int main() {
     cv::imshow("y_rect", y_rect);
     cv::waitKey(0);
     cv::destroyAllWindows();
-    std::vector<int> compression_params = {0};
-    cv::imwrite(output_image_file, y_rect, compression_params);
+    //    std::vector<int> compression_params = {0};
+    //    cv::imwrite(output_image_file, y_rect, compression_params);
     return 0;
 }

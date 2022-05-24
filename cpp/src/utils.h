@@ -45,3 +45,5 @@ void get_yuv(const std::string& yuv_file, int width, int height, cv::Mat& y,
              cv::Mat& u, cv::Mat& v);
 
 std::string type2str(int type);
+
+void write_csv(std::string file, cv::Mat m);
