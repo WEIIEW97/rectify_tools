@@ -1,6 +1,7 @@
 # Build Folder
 /cpp/build
 /cpp/cmake-build-debug
+/cpp/cmake-build-release
 /cpp/data
 
 # Idea Folder
@@ -9,3 +10,6 @@
 
 # matlab code
 /matlab
+
+# uselut folder(Eigen version)
+/uselut

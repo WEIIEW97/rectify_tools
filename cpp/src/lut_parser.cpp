@@ -1,4 +1,5 @@
 #include "lut_parser.h"
+
 #include "utils.h"
 
 typedef struct denseMap {
@@ -10,8 +11,8 @@ typedef struct denseMap {
 
 // read lookup table file and input image file
 void lut_parser(const std::string& lut_file, int int_len, int frac_len,
-                cv::Mat& Raw2RectDenseMapX, cv::Mat& Raw2RectDenseMapY,
-                cv::Mat& Rect2RawDenseMapX, cv::Mat& Rect2RawDenseMapY) {
+                cv::Mat& xOrig2Rect, cv::Mat& yOrig2Rect, cv::Mat& xRect2Orig,
+                cv::Mat& yRect2Orig) {
     //    cv::Mat input_img = cv::imread(input_image_file);
     //
     //    cv::Mat rect_img;
@@ -126,6 +127,9 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
     // repeat raw2rectSampleX_mat with dimension (rect2raw_sample_row_num, 1)
     cv::Mat raw2rectSample_x, raw2rectSample_y, rect2rawSample_x,
         rect2rawSample_y;
+    // don't know why, but if change from `rect2raw_sample_row_num` to
+    // `raw2rect_sample_row_num` then will cause an error.
+    // however, they are the same.
     cv::repeat(raw2rectSampleX_mat, (int)rect2raw_sample_row_num, 1,
                raw2rectSample_x);
     cv::repeat(raw2rectSampleY_mat, 1, (int)raw2rect_sample_col_num,
@@ -275,7 +279,7 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
     cv::transpose(rect2raw_delta_samplex, rect2raw_delta_samplex);
     cv::transpose(rect2raw_delta_sampley, rect2raw_delta_sampley);
 
-//    std::cout << rect2raw_delta_samplex << std::endl;
+    //    std::cout << rect2raw_delta_samplex << std::endl;
 
     cv::Mat Raw2RectMapX, Raw2RectMapY, Rect2RawMapX, Rect2RawMapY;
     cv::subtract(raw2rectSample_x, raw2rect_delta_samplex, Raw2RectMapX);
@@ -286,16 +290,18 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
     int nr = (int)row_num;
     int nc = (int)col_num;
 
-    Raw2RectDenseMapX = sparse2dense(nr, nc / 2, Raw2RectMapX, raw2rectSample_x,
-                                     raw2rectSample_y) -
-                        1;
-    Raw2RectDenseMapY = sparse2dense(nr, nc / 2, Raw2RectMapY, raw2rectSample_x,
-                                     raw2rectSample_y) -
-                        1;
-    Rect2RawDenseMapX =
+    // cannot minus 1 directly here, because it will cause judgement error in
+    // line 140(rect_img.cpp).
+    xOrig2Rect = sparse2dense(nr, nc / 2, Raw2RectMapX, raw2rectSample_x,
+                              raw2rectSample_y) -
+                 1;
+    yOrig2Rect = sparse2dense(nr, nc / 2, Raw2RectMapY, raw2rectSample_x,
+                              raw2rectSample_y) -
+                 1;
+    xRect2Orig =
         sparse2dense(nr, nc, Rect2RawMapX, rect2rawSample_x, rect2rawSample_y) -
         1;
-    Rect2RawDenseMapY =
+    yRect2Orig =
         sparse2dense(nr, nc, Rect2RawMapY, rect2rawSample_x, rect2rawSample_y) -
         1;
 }

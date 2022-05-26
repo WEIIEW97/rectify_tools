@@ -9,8 +9,6 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     const int orig_nr = image.rows;
     const int orig_nc = image.cols;
 
-    cv::Mat img_rect = cv::Mat::zeros(orig_nr, orig_nc, CV_8UC1);
-
     const int nr = scale * orig_nr;
     const int nc = scale * orig_nc;
 
@@ -23,7 +21,7 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     for (int i = 0; i < y_size; i++) {
         y_sampled.emplace_back(scale + scale * i - 1);
     }
-    
+
     if (y_sampled.back() != nr - 1) {
         y_sampled.push_back(nr - 1);
     }
@@ -38,7 +36,7 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
 
     for (int ii = scale - 1; ii < scale * (nr - 1); ii += scale) {
         int idx = ii / scale;
-        //        int idx = 187;
+        // int idx = 360;
 
         cv::Mat pixRect_1;
         cv::Mat x_slice, y_slice;
@@ -110,6 +108,7 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
                 pix_holddown2;
 
             for (int j = (int)startPixRect.at<double>(0, 0); j < nc; j++) {
+                // for (int j = 637; j < nc; j++) {
                 cv::Mat pixTmp_l =
                     cv::Mat::ones(5, 1, CV_64F) * j;  // repmat(j, 5, 1)
                 cv::Mat pixTmp_r(5, 1, CV_64F);
@@ -138,14 +137,10 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
                 // convert non-zero element to vector for mask_height and
                 // mask_width
                 cv::Mat pixTmp_height, pixTmp_width, index;
-                for (int i = 0; i < mask_height.rows; i++) {
-                    if (mask_height.at<double>(i, 0) != 0) {
-                        pixTmp_height.push_back(mask_height.row(i));
-                    }
-                }
 
-                for (int i = 0; i < mask_width.rows; i++) {
-                    if (mask_width.at<double>(i, 0) != 0) {
+                for (int i = 0; i < flagIn.rows; i++) {
+                    if (flagIn.at<uint8_t>(i, 0) != 0) {
+                        pixTmp_height.push_back(mask_height.row(i));
                         pixTmp_width.push_back(mask_width.row(i));
                     }
                 }
@@ -228,8 +223,8 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
                 cv::hconcat(bufferTmp_x, bufferTmp_y, rect2orig_tmp_in);
                 cv::Mat rect2orig_tmp =
                     cv::Mat::ones(pixTmp.rows, pixTmp.cols, CV_64F) * -10;
-                cv::Mat rect2orig_mask, rect2orig_buffer;
-                cv::hconcat(flagIn, flagIn, rect2orig_mask);
+                // cv::Mat rect2orig_mask, rect2orig_buffer;
+                // cv::hconcat(flagIn, flagIn, rect2orig_mask);
 
                 std::vector<int> flag_index;
                 for (int i = 0; i < flagIn.rows; i++) {
@@ -240,13 +235,18 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
 
                 //                std::cout << flagIn << std::endl;
 
-                rect2orig_tmp.copyTo(rect2orig_buffer, rect2orig_mask);
-                rect2orig_buffer = rect2orig_tmp_in;
+                // rect2orig_tmp.copyTo(rect2orig_buffer, rect2orig_mask);
+                // rect2orig_buffer = rect2orig_tmp_in;
+
+                //  std::cout << "rect2orig_tmp: " << rect2orig_tmp <<
+                //  std::endl; std::cout << "rect2orig_tmp_in: " <<
+                //  rect2orig_tmp_in << std::endl; std::cout <<
+                //  "rect2orig_buffer: " << rect2orig_buffer << std::endl;
 
                 for (int row = flag_index[0]; row < rect2orig_tmp.rows; row++) {
                     for (int col = 0; col < rect2orig_tmp.cols; col++) {
                         rect2orig_tmp.at<double>(row, col) =
-                            rect2orig_buffer.at<double>(row - flag_index[0],
+                            rect2orig_tmp_in.at<double>(row - flag_index[0],
                                                         col);
                     }
                 }
@@ -267,14 +267,14 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
 
                 std::vector<double> flag_tmp;
                 for (int i = 0; i < _rect2orig_tmp.rows; i++) {
-                    if (cvFloor(_rect2orig_tmp.at<double>(i, 0)) >= 0 &
+                    if (cvFloor(_rect2orig_tmp.at<double>(i, 0)) >= 0 &&
                         cvFloor(_rect2orig_tmp.at<double>(i, 0)) <=
-                            (nc / scale - 2) &
-                        rect2orig_tmp.at<double>(i, 1) >= y_sampled[idx] &
-                        rect2orig_tmp.at<double>(i, 1) < y_sampled[idx + 1] &
-                        rect2orig_tmp.at<double>(i, 1) >= 0 &
-                        rect2orig_tmp.at<double>(i, 1) < nr &
-                        pixTmp.at<double>(i, 1) >= 0 &
+                            (nc / scale - 2) &&
+                        rect2orig_tmp.at<double>(i, 1) >= y_sampled[idx] &&
+                        rect2orig_tmp.at<double>(i, 1) < y_sampled[idx + 1] &&
+                        rect2orig_tmp.at<double>(i, 1) >= 0 &&
+                        rect2orig_tmp.at<double>(i, 1) < nr &&
+                        pixTmp.at<double>(i, 1) >= 0 &&
                         pixTmp.at<double>(i, 1) < nr) {
                         flag_tmp.push_back(i);
                     }
@@ -370,10 +370,10 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     // check row numbers.
 
     // save pix_write to .csv
-    const std::string check =
-        "/Users/williamwei/Codes/rectify_tools/rectify_tools/cpp/data/case3/"
-        "output/pix_write.csv";
-    write_csv(check, pix_write);
+    // const std::string check =
+    //     "/Users/williamwei/Codes/rectify_tools/rectify_tools/cpp/data/case3/"
+    //     "output/pix_write.csv";
+    // write_csv(check, pix_write);
     std::vector<int> prop_idx;
     for (int i = 0; i < pix_write.rows; i++) {
         if (pix_write.at<double>(i, 0) >= 0 &&
@@ -443,7 +443,8 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
         ind.push_back(sub2ind_along_y(nr / scale, nc / scale, y, x));
     }
 
-    img_rect = bilinear_remap(img_rect, img_r, img_g, img_b, final_xy_orig_int,
+    cv::Mat img_rect;
+    img_rect = bilinear_remap(img_r, img_g, img_b, final_xy_orig_int,
                               final_xy_orig_frac, ind);
 
     //    cv::Scalar rect_sum = sum(img_rect);
@@ -452,14 +453,12 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     return img_rect;
 }
 
-cv::Mat bilinear_remap(cv::Mat& img_rect, const cv::Mat& img_r,
-                       const cv::Mat& img_g, const cv::Mat& img_b,
-                       const cv::Mat& final_xy_orig_int,
+cv::Mat bilinear_remap(const cv::Mat& img_r, const cv::Mat& img_g,
+                       const cv::Mat& img_b, const cv::Mat& final_xy_orig_int,
                        const cv::Mat& final_xy_orig_frac,
                        std::vector<int> ind) {
     const int nr = img_r.rows;
     const int nc = img_r.cols;
-    const int num_pix = nc * nr;
 
     cv::Mat bilinear_pix_floor1, bilinear_pix_floor2, bilinear_pix_floor3,
         bilinear_pix_floor4;
@@ -537,16 +536,23 @@ cv::Mat bilinear_remap(cv::Mat& img_rect, const cv::Mat& img_r,
     coordinate_generator(coord3_b, coeff3, img_b, bilinear_ind3, 9);
     coordinate_generator(coord4_b, coeff4, img_b, bilinear_ind4, 9);
 
+    cv::Mat r_rect, g_rect, b_rect;
+    r_rect = cv::Mat::zeros(nr, nc, CV_8UC1);
+    g_rect = cv::Mat::zeros(nr, nc, CV_8UC1);
+    b_rect = cv::Mat::zeros(nr, nc, CV_8UC1);
+
     for (int i = 0; i < ind.size(); i++) {
-        img_rect.at<uint8_t>(ind[i]) =
+        b_rect.at<uint8_t>(ind[i]) =
             floor(coord1_b[i] + coord2_b[i] + coord3_b[i] + coord4_b[i]);
-        img_rect.at<uint8_t>(num_pix + ind[i]) =
+        g_rect.at<uint8_t>(ind[i]) =
             floor(coord1_g[i] + coord2_g[i] + coord3_g[i] + coord4_g[i]);
-        img_rect.at<uint8_t>(2 * num_pix + ind[i]) =
+        r_rect.at<uint8_t>(ind[i]) =
             floor(coord1_r[i] + coord2_r[i] + coord3_r[i] + coord4_r[i]);
     }
-    // img_rect = img_rect.t();
-    // img_rect = img_rect.reshape(0, nc).t();
+
+    cv::Mat _buffer[3] = {b_rect, g_rect, r_rect};
+    cv::Mat img_rect;
+    cv::merge(_buffer, 3, img_rect);
     return img_rect;
 }
 
