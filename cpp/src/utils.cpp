@@ -62,13 +62,13 @@ int32_t double2fixed(double num, int frac_len) {
         // after tons of experiments, should use flooring when input is positive
         // use ceiling when input is negative.
         _buffer = std::floor(num * int_part);
-        res =
-            (_buffer == int32_t(_buffer)) ? _buffer : (_buffer >> 31) ^ SIGN_BIT_IGNORE;
+        res = (_buffer == int32_t(_buffer)) ? _buffer
+                                            : (_buffer >> 31) ^ SIGN_BIT_IGNORE;
     } else if (num < 0) {
         num = -num;
         _buffer = std::ceil(num * int_part);
-        res =
-            (_buffer == int32_t(_buffer)) ? _buffer : (_buffer >> 31) ^ SIGN_BIT_IGNORE;
+        res = (_buffer == int32_t(_buffer)) ? _buffer
+                                            : (_buffer >> 31) ^ SIGN_BIT_IGNORE;
         res = res ^ SIGN_BIT;
     } else {
         res = 0;

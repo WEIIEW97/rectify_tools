@@ -76,8 +76,8 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
         //        std::cout << res << std::endl;
         // take elements which != 0;
         cv::Mat pixRect;
-        for (int i = 0; i < res.rows; i++) {
-            if (res.at<double>(i, 0) != 0) {
+        for (int i = 0; i < flag.rows; i++) {
+            if (flag.at<uint8_t>(i, 0) != 0) {
                 pixRect.push_back(res.row(i));
             }
         }
@@ -243,11 +243,23 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
                 //  rect2orig_tmp_in << std::endl; std::cout <<
                 //  "rect2orig_buffer: " << rect2orig_buffer << std::endl;
 
-                for (int row = flag_index[0]; row < rect2orig_tmp.rows; row++) {
-                    for (int col = 0; col < rect2orig_tmp.cols; col++) {
-                        rect2orig_tmp.at<double>(row, col) =
-                            rect2orig_tmp_in.at<double>(row - flag_index[0],
-                                                        col);
+                // for (int row = flag_index[0]; row < rect2orig_tmp.rows;
+                // row++) {
+                //     for (int col = 0; col < rect2orig_tmp.cols; col++) {
+                //         rect2orig_tmp.at<double>(row, col) =
+                //             rect2orig_tmp_in.at<double>(row - flag_index[0],
+                //                                         col);
+                //     }
+                // }
+
+                for (int row = 0; row < rect2orig_tmp.rows; row++) {
+                    for (int by = 0; by < flag_index.size(); by++) {
+                        if (row == flag_index[by]) {
+                            rect2orig_tmp.at<double>(row, 0) =
+                                rect2orig_tmp_in.at<double>(by, 0);
+                            rect2orig_tmp.at<double>(row, 1) =
+                                rect2orig_tmp_in.at<double>(by, 1);
+                        }
                     }
                 }
 

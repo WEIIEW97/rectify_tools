@@ -1,7 +1,9 @@
+#include <time.h>
+
 #include <Eigen/Dense>
 #include <algorithm>  // for copy
- #include <boost/algorithm/string.hpp>
- #include <boost/any.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/any.hpp>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -12,7 +14,6 @@
 #include <opencv2/opencv.hpp>
 #include <tuple>
 #include <vector>
-#include <time.h>
 
 #define SIGN_BIT 0x80000000
 #define SIGN_BIT_IGNORE 0x7fffffff

@@ -17,7 +17,8 @@ def diff_cmp(img1, img2):
     diff_cnt = np.sum(diff_loc == False)
     print(f'different numbers is: {diff_cnt}')
 
-    diff_val = img1[:, :, 0].astype(np.double) - img2[:, :, 0].astype(np.double)
+    diff_val = img1[:, :, 0].astype(
+        np.double) - img2[:, :, 0].astype(np.double)
     print(
         f'max diff value: {diff_val.max()}, min diff value: {diff_val.min()}, avg diff value: {np.mean(diff_val)}')
 
