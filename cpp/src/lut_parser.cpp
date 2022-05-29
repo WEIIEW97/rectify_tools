@@ -2,13 +2,6 @@
 
 #include "utils.h"
 
-typedef struct denseMap {
-    cv::Mat rawX;
-    cv::Mat rawY;
-    cv::Mat rectX;
-    cv::Mat rectY;
-} denseMap;
-
 // read lookup table file and input image file
 void lut_parser(const std::string& lut_file, int int_len, int frac_len,
                 cv::Mat& xOrig2Rect, cv::Mat& yOrig2Rect, cv::Mat& xRect2Orig,

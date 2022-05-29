@@ -191,3 +191,20 @@ void write_csv(std::string file, cv::Mat m) {
     f << cv::format(m, cv::Formatter::FMT_CSV) << std::endl;
     f.close();
 }
+
+void show_img(cv::Mat img, std::string win_name) {
+    cv::namedWindow(win_name, cv::WINDOW_AUTOSIZE);
+    cv::imshow(win_name, img);
+    cv::waitKey(0);
+    cv::destroyWindow(win_name);
+}
+
+void show_bilinear_img(int row, int col, std::vector<int> rect_idx,
+                       std::string win_name) {
+    cv::Mat bi_linear;
+    bi_linear = cv::Mat::zeros(row, col, CV_8UC1) * 255;
+    for (auto i : rect_idx) {
+        bi_linear.at<uint8_t>(i) = 0;
+    }
+    show_img(bi_linear, win_name);
+}

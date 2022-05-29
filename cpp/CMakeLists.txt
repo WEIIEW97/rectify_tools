@@ -24,6 +24,9 @@ src/rect_img.h
 src/rect_img.cpp
 src/lut_parser.h
 src/lut_parser.cpp
-src/use_lut.cpp)
+src/use_lut.h
+src/use_lut.cpp
+run.cpp
+)
 
 target_link_libraries(cpp ${OpenCV_LIBS})

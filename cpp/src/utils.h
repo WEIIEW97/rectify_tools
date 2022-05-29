@@ -48,3 +48,8 @@ void get_yuv(const std::string& yuv_file, int width, int height, cv::Mat& y,
 std::string type2str(int type);
 
 void write_csv(std::string file, cv::Mat m);
+
+void show_img(cv::Mat img, std::string win_name);
+
+void show_bilinear_img(int row, int col, std::vector<int> rect_idx,
+                       std::string win_name);

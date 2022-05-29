@@ -3,9 +3,10 @@
 #include "lut_parser.h"
 #include "utils.h"
 
-cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
+rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
                  cv::Mat xRect2Orig, cv::Mat yRect2Orig, const cv::Mat& image,
                  int scale) {
+    
     const int orig_nr = image.rows;
     const int orig_nc = image.cols;
 
@@ -260,8 +261,6 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
             continue;
     }
 
-    // test: try pix_write_test intead of pix_write.
-    // check row numbers.
 
     // save pix_write to .csv
     // const std::string check =
@@ -308,8 +307,6 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     cv::Mat xy_orig_frac(xy_orig.rows, xy_orig.cols, CV_64F);
     cv::subtract(xy_orig, xy_orig_int, xy_orig_frac);
 
-    //    std::cout << xy_orig_frac << std::endl;
-
     cv::Mat final_flag, final_mask, final_xy_orig_int, final_xy_orig_frac;
     final_flag = xy_orig_int.colRange(0, 1) >= 0 &
                  xy_orig_int.colRange(0, 1) < int(nc / scale - 1) &
@@ -337,17 +334,18 @@ cv::Mat rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
         ind.push_back(sub2ind_along_y(nr / scale, nc / scale, y, x));
     }
 
-    cv::Mat img_rect;
-    img_rect = bilinear_remap(img_r, img_g, img_b, final_xy_orig_int,
+    rectBuffer rect_buffer;
+    rect_buffer = bilinear_remap(img_r, img_g, img_b, final_xy_orig_int,
                               final_xy_orig_frac, ind);
-
-    return img_rect;
+    return rect_buffer;
 }
 
-cv::Mat bilinear_remap(const cv::Mat& img_r, const cv::Mat& img_g,
+rectBuffer bilinear_remap(const cv::Mat& img_r, const cv::Mat& img_g,
                        const cv::Mat& img_b, const cv::Mat& final_xy_orig_int,
                        const cv::Mat& final_xy_orig_frac,
                        std::vector<int> ind) {
+    rectBuffer bi_buffer;
+    std::vector<int> bilinear_ind;
     const int nr = img_r.rows;
     const int nc = img_r.cols;
 
@@ -377,6 +375,18 @@ cv::Mat bilinear_remap(const cv::Mat& img_r, const cv::Mat& img_g,
             sub2ind_along_y(nr, nc, (int)bilinear_pix_floor4.at<double>(i, 1),
                             (int)bilinear_pix_floor4.at<double>(i, 0)));
     }
+    // merge 4 vectors
+    bilinear_ind.reserve(bilinear_ind1.size() + bilinear_ind2.size() +
+                         bilinear_ind3.size() + bilinear_ind4.size());
+    bilinear_ind.insert(bilinear_ind.end(), bilinear_ind1.begin(),
+                        bilinear_ind1.end());
+    bilinear_ind.insert(bilinear_ind.end(), bilinear_ind2.begin(),
+                        bilinear_ind2.end());
+    bilinear_ind.insert(bilinear_ind.end(), bilinear_ind3.begin(),
+                        bilinear_ind3.end());
+    bilinear_ind.insert(bilinear_ind.end(), bilinear_ind4.begin(),
+                        bilinear_ind4.end());
+
 
     cv::Mat coeff1 = (1 - final_xy_orig_frac.colRange(1, 2))
                          .mul((1 - final_xy_orig_frac.colRange(0, 1)));
@@ -445,7 +455,10 @@ cv::Mat bilinear_remap(const cv::Mat& img_r, const cv::Mat& img_g,
     cv::Mat _buffer[3] = {b_rect, g_rect, r_rect};
     cv::Mat img_rect;
     cv::merge(_buffer, 3, img_rect);
-    return img_rect;
+
+    bi_buffer.rect_img = img_rect;
+    bi_buffer.rect_idx = bilinear_ind;
+    return bi_buffer;
 }
 
 void coordinate_generator(std::vector<double>& vec, cv::Mat coeff,
