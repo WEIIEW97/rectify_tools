@@ -19,4 +19,8 @@ void use_lut(int row, int col, int int_len, int frac_len,
     if (show_bi_img) {
         show_bilinear_img(row, col, y_rect.rect_idx, BILINEAR_IMG_WINNAME);
     }
+
+    std::vector<int> unrect;
+    unrect = get_unrect_idx(row, col, y_rect.rect_idx);
+    printf("The number of unrectified pixels: %lu\n", unrect.size());
 }

@@ -2,6 +2,7 @@
 
 #include "utils.h"
 
+
 // read lookup table file and input image file
 void lut_parser(const std::string& lut_file, int int_len, int frac_len,
                 cv::Mat& xOrig2Rect, cv::Mat& yOrig2Rect, cv::Mat& xRect2Orig,
@@ -123,7 +124,8 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
     // don't know why, but if change from `rect2raw_sample_row_num` to
     // `raw2rect_sample_row_num` then will cause an error.
     // however, they are the same.
-    cv::repeat(raw2rectSampleX_mat, (int)rect2raw_sample_row_num, 1,
+    // update: fixed this error.
+    cv::repeat(raw2rectSampleX_mat, (int)raw2rect_sample_row_num, 1,
                raw2rectSample_x);
     cv::repeat(raw2rectSampleY_mat, 1, (int)raw2rect_sample_col_num,
                raw2rectSample_y);

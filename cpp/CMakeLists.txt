@@ -12,10 +12,10 @@ include_directories(src)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories("/usr/local/Cellar/eigen/3.4.0_1/include/eigen3/")
-include_directories("/usr/local/Cellar/boost/1.78.0_1/include")
-
-
-link_directories("/usr/local/Cellar/boost/1.78.0_1/lib")
+#include_directories("/usr/local/Cellar/boost/1.78.0_1/include")
+#
+#
+#link_directories("/usr/local/Cellar/boost/1.78.0_1/lib")
 
 add_executable(cpp
 src/utils.h

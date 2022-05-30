@@ -2,8 +2,9 @@
 
 #include <Eigen/Dense>
 #include <algorithm>  // for copy
-#include <boost/algorithm/string.hpp>
-#include <boost/any.hpp>
+//#include <boost/algorithm/string.hpp>
+//#include <boost/any.hpp>
+#include<unordered_set>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -51,5 +52,8 @@ void write_csv(std::string file, cv::Mat m);
 
 void show_img(cv::Mat img, std::string win_name);
 
-void show_bilinear_img(int row, int col, std::vector<int> rect_idx,
+void show_bilinear_img(int row, int col, const std::vector<int>& rect_idx,
                        std::string win_name);
+
+std::vector<int> get_unrect_idx(int row, int col,
+                                const std::vector<int>& rect_idx);

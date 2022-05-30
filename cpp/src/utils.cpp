@@ -199,12 +199,32 @@ void show_img(cv::Mat img, std::string win_name) {
     cv::destroyWindow(win_name);
 }
 
-void show_bilinear_img(int row, int col, std::vector<int> rect_idx,
+void show_bilinear_img(int row, int col, const std::vector<int>& rect_idx,
                        std::string win_name) {
     cv::Mat bi_linear;
-    bi_linear = cv::Mat::zeros(row, col, CV_8UC1) * 255;
+    bi_linear = cv::Mat::ones(row, col, CV_8UC1) * 255;
     for (auto i : rect_idx) {
         bi_linear.at<uint8_t>(i) = 0;
     }
     show_img(bi_linear, win_name);
+}
+
+std::vector<int> get_unrect_idx(int row, int col,
+                                const std::vector<int>& rect_idx) {
+    std::unordered_set<int> rect_set;
+    std::vector<int> img_idx, unrect_idx;
+    for (int i = 0; i < row * col; i++) {
+        img_idx.emplace_back(i);
+    }
+
+    for (int j : rect_idx) {
+        rect_set.insert(j);
+    }
+
+    for (int & k : img_idx) {
+        if (rect_set.find(k) == rect_set.end()) {
+            unrect_idx.emplace_back(k);
+        }
+    }
+    return unrect_idx;
 }

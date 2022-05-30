@@ -1,3 +1,6 @@
+#ifndef LUT_PARSER_H_
+#define LUT_PARSER_H_
+
 #include "utils.h"
 
 void lut_parser(const std::string& lut_file, int int_len, int frac_len,
@@ -10,3 +13,5 @@ cv::Mat sparse2dense(int row, int col, cv::Mat sparseMat, cv::Mat sampleX,
 double num2fix(double num, int frac_len);
 
 double num2fix_unsigned(double num, int frac_len);
+
+#endif  // LUT_PARSER_H_

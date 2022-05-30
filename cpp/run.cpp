@@ -16,6 +16,6 @@ int main() {
     const int frac_len = 5;
 
     use_lut(row, col, int_len, frac_len, lut_file, yuv_path, output_image_file,
-            true);
+            false);
     return 0;
 }
