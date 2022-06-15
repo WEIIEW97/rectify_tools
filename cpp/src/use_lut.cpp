@@ -13,14 +13,16 @@ void use_lut(int row, int col, int int_len, int frac_len,
     cv::merge(y_buffer, 3, y_ch);
     rectBuffer y_rect;
     y_rect = rect_img(xOrig2Rect, yOrig2Rect, xRect2Orig, yRect2Orig, y_ch, 1);
-
+    
+    std::vector<int> unrect;
+    unrect = get_unrect_idx(row, col, y_rect.rect_idx);
+    
     std::vector<int> _param = {0};
     cv::imwrite(out_path, y_rect.rect_img, _param);
     if (show_bi_img) {
-        show_bilinear_img(row, col, y_rect.rect_idx, BILINEAR_IMG_WINNAME);
+        show_bilinear_img(row, col, unrect, BILINEAR_IMG_WINNAME);
     }
 
-    std::vector<int> unrect;
-    unrect = get_unrect_idx(row, col, y_rect.rect_idx);
+    
     printf("The number of unrectified pixels: %lu\n", unrect.size());
 }

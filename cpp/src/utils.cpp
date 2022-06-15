@@ -199,11 +199,11 @@ void show_img(cv::Mat img, std::string win_name) {
     cv::destroyWindow(win_name);
 }
 
-void show_bilinear_img(int row, int col, const std::vector<int>& rect_idx,
+void show_bilinear_img(int row, int col, const std::vector<int>& unrect_idx,
                        std::string win_name) {
     cv::Mat bi_linear;
     bi_linear = cv::Mat::ones(row, col, CV_8UC1) * 255;
-    for (auto i : rect_idx) {
+    for (auto i : unrect_idx) {
         bi_linear.at<uint8_t>(i) = 0;
     }
     show_img(bi_linear, win_name);

@@ -2,14 +2,10 @@
 
 #include "utils.h"
 
-
 // read lookup table file and input image file
 void lut_parser(const std::string& lut_file, int int_len, int frac_len,
                 cv::Mat& xOrig2Rect, cv::Mat& yOrig2Rect, cv::Mat& xRect2Orig,
                 cv::Mat& yRect2Orig) {
-    //    cv::Mat input_img = cv::imread(input_image_file);
-    //
-    //    cv::Mat rect_img;
     std::vector<double> lut_info;
     std::ifstream file(lut_file);
     assert(file.is_open());
@@ -154,9 +150,6 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
             dec2bin(int(i), raw2rect_world_len * 2));
     }
 
-    //    No need to add index again.
-    //    index += (int)raw2rect_sample_row_num * (int)raw2rect_sample_col_num;
-
     std::vector<double> raw2rect_delta_sample_x, raw2rect_delta_sample_y;
     // convert binary to decimal for raw2rec_delta_sample_bin
     for (auto& i : raw2rect_delta_sample_bin) {
@@ -274,8 +267,6 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
     cv::transpose(rect2raw_delta_samplex, rect2raw_delta_samplex);
     cv::transpose(rect2raw_delta_sampley, rect2raw_delta_sampley);
 
-    //    std::cout << rect2raw_delta_samplex << std::endl;
-
     cv::Mat Raw2RectMapX, Raw2RectMapY, Rect2RawMapX, Rect2RawMapY;
     cv::subtract(raw2rectSample_x, raw2rect_delta_samplex, Raw2RectMapX);
     cv::subtract(raw2rectSample_y, raw2rect_delta_sampley, Raw2RectMapY);
@@ -285,8 +276,6 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
     int nr = (int)row_num;
     int nc = (int)col_num;
 
-    // cannot minus 1 directly here, because it will cause judgement error in
-    // line 140(rect_img.cpp).
     xOrig2Rect = sparse2dense(nr, nc / 2, Raw2RectMapX, raw2rectSample_x,
                               raw2rectSample_y) -
                  1;
@@ -302,68 +291,138 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
 }
 
 cv::Mat sparse2dense(int row, int col, cv::Mat sparseMat, cv::Mat sampleX,
-                     cv::Mat sampleY) {
-    cv::Mat xAll, yAll;
-    meshgrid(cv::Range(1, col), cv::Range(1, row), xAll, yAll);
-    cv::Mat XY;
-    // need to transpose, c++ is manipulating by rows whereas matlab by cols.
-    xAll = xAll.t();
-    yAll = yAll.t();
-    cv::hconcat(xAll.reshape(0, row * col), yAll.reshape(0, row * col), XY);
+                    cv::Mat sampleY) {
+   cv::Mat xAll, yAll;
+   meshgrid(cv::Range(1, col), cv::Range(1, row), xAll, yAll);
+   cv::Mat XY;
+   // need to transpose, c++ is manipulating by rows whereas matlab by cols.
+   xAll = xAll.t();
+   yAll = yAll.t();
+   cv::hconcat(xAll.reshape(0, row * col), yAll.reshape(0, row * col), XY);
 
-    // std::vector<boost::any> sparse_buffer, sample_buffer, dense_buffer;
-    double a0, a1, a2, a3;
-    double b0, b1, b2, b3;
-    double c0, c1, c2, c3, c4;
-    cv::Mat denseMat(row * col, 1, CV_64F);
+   double a0, a1, a2, a3;
+   double b0, b1, b2, b3;
+   double c0, c1, c2, c3, c4;
+   cv::Mat denseMat(row * col, 1, CV_64F);
 
-    for (int i = 0; i < sampleX.rows - 1; i++) {
-        double markY = sampleY.at<double>(i, 0);
-        double markY_next = sampleY.at<double>(i + 1, 0);
-        double dltY = markY_next - markY;
-        for (int j = 0; j < sampleX.cols - 1; j++) {
-            double markX = sampleX.at<double>(0, j);
-            double markX_next = sampleX.at<double>(0, j + 1);
-            double dltX = markX_next - markX;
-            double dltXY = dltX * dltY;
-            for (int k = 0; k < XY.rows; k++) {
-                if (XY.at<int>(k, 0) >= markX &&
-                    XY.at<int>(k, 0) < markX_next &&
-                    XY.at<int>(k, 1) >= markY &&
-                    XY.at<int>(k, 1) < markY_next) {
-                    /* handle with sparseMat */
-                    a0 = num2fix(sparseMat.at<double>(i, j) / dltXY, 12);
-                    a1 = num2fix(sparseMat.at<double>(i, j + 1) / dltXY, 12);
-                    a2 = num2fix(sparseMat.at<double>(i + 1, j) / dltXY, 12);
-                    a3 =
-                        num2fix(sparseMat.at<double>(i + 1, j + 1) / dltXY, 12);
+   for (int i = 0; i < sampleX.rows - 1; i++) {
+       double markY = sampleY.at<double>(i, 0);
+       double markY_next = sampleY.at<double>(i + 1, 0);
+       double dltY = markY_next - markY;
+       for (int j = 0; j < sampleX.cols - 1; j++) {
+           double markX = sampleX.at<double>(0, j);
+           double markX_next = sampleX.at<double>(0, j + 1);
+           double dltX = markX_next - markX;
+           double dltXY = dltX * dltY;
+           for (int k = 0; k < XY.rows; k++) {
+               if (XY.at<int>(k, 0) >= markX &&
+                   XY.at<int>(k, 0) < markX_next &&
+                   XY.at<int>(k, 1) >= markY &&
+                   XY.at<int>(k, 1) < markY_next) {
+                   /* handle with sparseMat */
+                   a0 = num2fix(sparseMat.at<double>(i, j) / dltXY, 12);
+                   a1 = num2fix(sparseMat.at<double>(i, j + 1) / dltXY, 12);
+                   a2 = num2fix(sparseMat.at<double>(i + 1, j) / dltXY, 12);
+                   a3 =
+                       num2fix(sparseMat.at<double>(i + 1, j + 1) / dltXY,
+                       12);
 
-                    /* handle with sample */
-                    b0 = (markX_next - XY.at<int>(k, 0)) *
-                         (markY_next - XY.at<int>(k, 1));
-                    b1 = (-markX + XY.at<int>(k, 0)) *
-                         (markY_next - XY.at<int>(k, 1));
-                    b2 = (markX_next - XY.at<int>(k, 0)) *
-                         (-markY + XY.at<int>(k, 1));
-                    b3 = (-markX + XY.at<int>(k, 0)) *
-                         (-markY + XY.at<int>(k, 1));
+                   /* handle with sample */
+                   b0 = (markX_next - XY.at<int>(k, 0)) *
+                        (markY_next - XY.at<int>(k, 1));
+                   b1 = (-markX + XY.at<int>(k, 0)) *
+                        (markY_next - XY.at<int>(k, 1));
+                   b2 = (markX_next - XY.at<int>(k, 0)) *
+                        (-markY + XY.at<int>(k, 1));
+                   b3 = (-markX + XY.at<int>(k, 0)) *
+                        (-markY + XY.at<int>(k, 1));
 
-                    /* handle with denseMat and apply bilinear interpolation */
-                    c0 = num2fix(a0 * b0, 12);
-                    c1 = num2fix(a1 * b1, 12);
-                    c2 = num2fix(a2 * b2, 12);
-                    c3 = num2fix(a3 * b3, 12);
-                    c4 = num2fix((c0 + c1 + c2 + c3), 9);
+                   /* handle with denseMat and apply bilinear interpolation
+                   */ c0 = num2fix(a0 * b0, 12); c1 = num2fix(a1 * b1, 12);
+                   c2 = num2fix(a2 * b2, 12);
+                   c3 = num2fix(a3 * b3, 12);
+                   c4 = num2fix((c0 + c1 + c2 + c3), 9);
 
-                    denseMat.at<double>(k, 0) = c4;
-                }
-            }
-        }
-    }
-    denseMat = denseMat.t();
-    denseMat = denseMat.reshape(0, col).t();
-    return denseMat;
+                   denseMat.at<double>(k, 0) = c4;
+               }
+           }
+       }
+   }
+   denseMat = denseMat.t();
+   denseMat = denseMat.reshape(0, col).t();
+   return denseMat;
 }
+
+// cv::Mat sparse2dense(int row, int col, cv::Mat sparseMat, cv::Mat sampleX,
+//                      cv::Mat sampleY) {
+//     cv::Mat xAll, yAll;
+//     meshgrid(cv::Range(1, col), cv::Range(1, row), xAll, yAll);
+//     cv::Mat XY;
+//     // need to transpose, c++ is manipulating by rows whereas matlab by cols.
+//     xAll = xAll.t();
+//     yAll = yAll.t();
+//     cv::hconcat(xAll.reshape(0, row * col), yAll.reshape(0, row * col), XY);
+
+//     double a0, a1, a2, a3;
+//     double b0, b1, b2, b3;
+//     double c0, c1, c2, c3, c4;
+//     cv::Mat denseMat(row * col, 1, CV_64F);
+
+//     const int x_rows = sampleX.rows;
+//     const int x_cols = sampleX.cols;
+//     const int xy_rows = col * row;
+
+//     for (int i = 0; i < x_rows - 1; i++) {
+//         // const double* y_ptr = sampleY.ptr<double>(i);
+//         // const double* y_next_ptr = sampleY.ptr<double>(i + 1);
+//         // const double* sparse_ptr = sparseMat.ptr<double>(i);
+//         // const double* sparse_next_ptr = sparseMat.ptr<double>(i + 1);
+//         const uchar* y_ptr = sampleY.ptr(i);
+//         const uchar* y_next_ptr = sampleY.ptr(i + 1);
+//         const uchar* sparse_ptr = sparseMat.ptr(i);
+//         const uchar* sparse_next_ptr = sparseMat.ptr(i + 1);
+//         double markY = y_ptr[0];
+//         double markY_next = y_next_ptr[0];
+//         double dltY = markY_next - markY;
+//         for (int j = 0; j < x_cols - 1; j++) {
+//             // const double* x_ptr = sampleX.ptr<double>(0);
+//             const uchar* x_ptr = sampleX.ptr(0);
+//             double markX = x_ptr[j];
+//             double markX_next = x_ptr[j + 1]; 
+//             double dltX = markX_next - markX;
+//             double dltXY = dltX * dltY;
+//             for (int k = 0; k < xy_rows; k++) {
+//                 const int* xy_ptr = XY.ptr<int>(k);
+//                 if (xy_ptr[0] >= markX && xy_ptr[0] < markX_next &&
+//                     xy_ptr[1] >= markY && xy_ptr[1] < markY_next) {
+//                     // auto *dense_ptr = denseMat.ptr<double>(k);
+//                     uchar* dense_ptr = denseMat.ptr(k);
+
+//                     a0 = num2fix(sparse_ptr[j] / dltXY, 12);
+//                     a1 = num2fix(sparse_ptr[j + 1] / dltXY, 12);
+//                     a2 = num2fix(sparse_next_ptr[j] / dltXY, 12);
+//                     a3 = num2fix(sparse_next_ptr[j + 1] / dltXY, 12);
+
+//                     b0 = (markX_next - xy_ptr[0]) * (markY_next - xy_ptr[1]);
+//                     b1 = (-markX + xy_ptr[0]) * (markY_next - xy_ptr[1]);
+//                     b2 = (markX_next - xy_ptr[0]) * (-markY + xy_ptr[1]);
+//                     b3 = (-markX + xy_ptr[0]) * (-markY + xy_ptr[1]);
+
+//                     c0 = num2fix(a0 * b0, 12);
+//                     c1 = num2fix(a1 * b1, 12);
+//                     c2 = num2fix(a2 * b2, 12);
+//                     c3 = num2fix(a3 * b3, 12);
+//                     c4 = num2fix((c0 + c1 + c2 + c3), 9);
+
+//                     dense_ptr[0] = c4;
+//                 }
+//             }
+//         }
+//     }
+//     denseMat = denseMat.t();
+//     denseMat = denseMat.reshape(0, col).t();
+//     return denseMat;
+// }
 
 // convert float number to fixed point number then return as double
 double num2fix(double num, int frac_len) {

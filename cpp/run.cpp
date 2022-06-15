@@ -15,7 +15,11 @@ int main() {
     const int int_len = 9;
     const int frac_len = 5;
 
+
+    clock_t start = clock();
     use_lut(row, col, int_len, frac_len, lut_file, yuv_path, output_image_file,
             false);
+    clock_t end = clock();
+    printf("Runtime: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
     return 0;
 }

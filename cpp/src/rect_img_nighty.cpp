@@ -55,10 +55,10 @@ rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
         // scale=2 was wrong in original code
         // ceiling operation for every pixRect_1 ???
         for (int i = 0; i < pixRect_1.size[0]; i++) {
+            auto* ptr = pixRect_1.ptr<double>(i);
             for (int j = 0; j < 2; j++) {  // dimension is (N, 2)
-                pixRect_1.at<double>(i, j) = cvCeil(pixRect_1.at<double>(
-                    i, j));  // this may not work sice ceil(double num) but not
-                             // ceil(int num)
+                ptr[j] = cvCeil(ptr[j]);   // this may not work sice ceil(double
+                                           // num) but not ceil(int num)
             }
         }
 
@@ -74,17 +74,18 @@ rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
         // take elements which != 0;
         cv::Mat pixRect;
         for (int i = 0; i < flag.rows; i++) {
-            if (flag.at<uint8_t>(i, 0) != 0) {
+            if (flag.ptr<uint8_t>(i)[0] != 0) {
                 pixRect.push_back(res.row(i));
             }
         }
 
         // ??? why would we do this?
         if (!pixRect.empty()) {
-            if (int(pixRect.at<double>(0, 0)) % scale != 0) {
-                pixRect.at<double>(0, 0) = pixRect.at<double>(0, 0) - 1;
-            } else if (int(pixRect.at<double>(0, 1)) % scale != 0) {
-                pixRect.at<double>(0, 1) = pixRect.at<double>(0, 1) - 1;
+            auto* ptr = pixRect.ptr<double>(0);
+            if (int(ptr[0]) % scale != 0) {
+                ptr[0] = ptr[0] - 1;
+            } else if (int(ptr[1]) % scale != 0) {
+                ptr[1] = ptr[1] - 1;
             }
         } else
             continue;
@@ -99,15 +100,17 @@ rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
             cv::Mat pix_found, pix_holdup1, pix_holdup2, pix_holddown1,
                 pix_holddown2;
 
-            for (int j = (int)startPixRect.at<double>(0, 0); j < nc; j++) {
+            for (int j = (int)startPixRect.ptr<double>(0)[0]; j < nc; j++) {
                 cv::Mat pixTmp_l =
                     cv::Mat::ones(5, 1, CV_64F) * j;  // repmat(j, 5, 1)
                 cv::Mat pixTmp_r(5, 1, CV_64F);
-                pixTmp_r.at<double>(0, 0) = pix.at<double>(0, 1) - 2 * scale;
-                pixTmp_r.at<double>(1, 0) = pix.at<double>(0, 1) - 1 * scale;
-                pixTmp_r.at<double>(2, 0) = pix.at<double>(0, 1);
-                pixTmp_r.at<double>(3, 0) = pix.at<double>(0, 1) + 1 * scale;
-                pixTmp_r.at<double>(4, 0) = pix.at<double>(0, 1) + 2 * scale;
+                auto* tmpr_ptr = pixTmp_r.ptr<double>(0);
+                auto* pix_ptr = pix.ptr<double>(0);
+                tmpr_ptr[0] = pix_ptr[1] - 2 * scale;
+                tmpr_ptr[1] = pix_ptr[1] - 1 * scale;
+                tmpr_ptr[2] = pix_ptr[1];
+                tmpr_ptr[3] = pix_ptr[1] + 1 * scale;
+                tmpr_ptr[4] = pix_ptr[1] + 2 * scale;
 
                 cv::Mat pixTmp;
                 cv::hconcat(pixTmp_l, pixTmp_r, pixTmp);
@@ -126,7 +129,7 @@ rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
                 cv::Mat pixTmp_height, pixTmp_width, index;
 
                 for (int i = 0; i < flagIn.rows; i++) {
-                    if (flagIn.at<uint8_t>(i, 0) != 0) {
+                    if (flagIn.ptr<uint8_t>(i)[0] != 0) {
                         pixTmp_height.push_back(mask_height.row(i));
                         pixTmp_width.push_back(mask_width.row(i));
                     }
@@ -134,16 +137,16 @@ rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
 
                 for (int i = 0; i < pixTmp_width.rows; i++) {
                     index.push_back(sub2ind_along_y(
-                        nr, nc, (int)pixTmp_height.at<double>(i),
-                        (int)pixTmp_width.at<double>(i)));
+                        nr, nc, (int)pixTmp_height.ptr<double>(i)[0],
+                        (int)pixTmp_width.ptr<double>(i)[0]));
                 }
 
                 cv::Mat bufferTmp_x, bufferTmp_y, rect2orig_tmp_in;
                 for (int i = 0; i < index.rows; i++) {
                     bufferTmp_x.push_back(
-                        xRect2Orig.at<double>(index.at<int>(i)));
+                        xRect2Orig.at<double>(*index.ptr<int>(i)));
                     bufferTmp_y.push_back(
-                        yRect2Orig.at<double>(index.at<int>(i)));
+                        yRect2Orig.at<double>(*index.ptr<int>(i)));
                 }
                 cv::hconcat(bufferTmp_x, bufferTmp_y, rect2orig_tmp_in);
                 cv::Mat rect2orig_tmp =
@@ -151,18 +154,18 @@ rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
 
                 std::vector<int> flag_index;
                 for (int i = 0; i < flagIn.rows; i++) {
-                    if (flagIn.at<uint8_t>(i, 0) != 0) {
+                    if (flagIn.ptr<uint8_t>(i)[0] != 0) {
                         flag_index.push_back(i);
                     }
                 }
 
                 for (int row = 0; row < rect2orig_tmp.rows; row++) {
+                    auto* tmp_ptr = rect2orig_tmp.ptr<double>(row);
                     for (int by = 0; by < flag_index.size(); by++) {
                         if (row == flag_index[by]) {
-                            rect2orig_tmp.at<double>(row, 0) =
-                                rect2orig_tmp_in.at<double>(by, 0);
-                            rect2orig_tmp.at<double>(row, 1) =
-                                rect2orig_tmp_in.at<double>(by, 1);
+                            auto* tmp_in_ptr = rect2orig_tmp_in.ptr<double>(by);
+                            tmp_ptr[0] = tmp_in_ptr[0];
+                            tmp_ptr[1] = tmp_in_ptr[1];
                         }
                     }
                 }
@@ -171,22 +174,22 @@ rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
                                        CV_64F);
                 for (int row = 0; row < rect2orig_tmp.rows; row++) {
                     for (int col = 0; col < rect2orig_tmp.cols; col++) {
-                        _rect2orig_tmp.at<double>(row, col) = num2fix_unsigned(
-                            rect2orig_tmp.at<double>(row, col) / scale, 9);
+                        _rect2orig_tmp.ptr<double>(row)[col] = num2fix_unsigned(
+                            rect2orig_tmp.ptr<double>(row)[col] / scale, 9);
                     }
                 }
 
                 std::vector<double> flag_tmp;
                 for (int i = 0; i < _rect2orig_tmp.rows; i++) {
-                    if (cvFloor(_rect2orig_tmp.at<double>(i, 0)) >= 0 &&
-                        cvFloor(_rect2orig_tmp.at<double>(i, 0)) <=
+                    if (cvFloor(_rect2orig_tmp.ptr<double>(i)[0]) >= 0 &&
+                        cvFloor(_rect2orig_tmp.ptr<double>(i)[0]) <=
                             (nc / scale - 2) &&
-                        rect2orig_tmp.at<double>(i, 1) >= y_sampled[idx] &&
-                        rect2orig_tmp.at<double>(i, 1) < y_sampled[idx + 1] &&
-                        rect2orig_tmp.at<double>(i, 1) >= 0 &&
-                        rect2orig_tmp.at<double>(i, 1) < nr &&
-                        pixTmp.at<double>(i, 1) >= 0 &&
-                        pixTmp.at<double>(i, 1) < nr) {
+                        rect2orig_tmp.ptr<double>(i)[1] >= y_sampled[idx] &&
+                        rect2orig_tmp.ptr<double>(i)[1] < y_sampled[idx + 1] &&
+                        rect2orig_tmp.ptr<double>(i)[1] >= 0 &&
+                        rect2orig_tmp.ptr<double>(i)[1] < nr &&
+                        pixTmp.ptr<double>(i)[1] >= 0 &&
+                        pixTmp.ptr<double>(i)[1] < nr) {
                         flag_tmp.push_back(i);
                     }
                 }
@@ -269,18 +272,16 @@ rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     // write_csv(check, pix_write);
     std::vector<int> prop_idx;
     for (int i = 0; i < pix_write.rows; i++) {
-        if (pix_write.at<double>(i, 0) >= 0 &&
-            pix_write.at<double>(i, 0) < nc &&
-            pix_write.at<double>(i, 1) >= 0 &&
-            pix_write.at<double>(i, 1) < nr) {
+        const double* pix_ptr = pix_write.ptr<double>(i);
+        if (pix_ptr[0] >= 0 && pix_ptr[0] < nc && pix_ptr[1] >= 0 &&
+            pix_ptr[1] < nr) {
             prop_idx.push_back(
-                sub2ind_along_y(nr, nc, (int)pix_write.at<double>(i, 1),
-                                (int)pix_write.at<double>(i, 0)));
+                sub2ind_along_y(nr, nc, (int)pix_ptr[1], (int)pix_ptr[0]));
         }
     }
 
     rect_buffer.rect_idx = prop_idx;
-    
+
     cv::Mat x_orig, y_orig, xy_orig_tmp;
     for (int i : prop_idx) {
         x_orig.push_back(xRect2Orig.at<double>(i));
@@ -289,21 +290,24 @@ rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     cv::hconcat(x_orig, y_orig, xy_orig_tmp);
 
     cv::Mat xy_orig;
-    xy_orig = cv::Mat::zeros(xy_orig_tmp.rows, xy_orig_tmp.cols, CV_64F);
-    for (int row = 0; row < xy_orig_tmp.rows; row++) {
-        for (int col = 0; col < xy_orig_tmp.cols; col++) {
-            xy_orig.at<double>(row, col) =
-                num2fix_unsigned(xy_orig_tmp.at<double>(row, col) / scale, 9);
+    const int rows0 = xy_orig_tmp.rows;
+    const int cols0 = xy_orig_tmp.cols;
+    xy_orig = cv::Mat::zeros(rows0, cols0, CV_64F);
+    for (int row = 0; row < rows0; row++) {
+        const double* ptr = xy_orig_tmp.ptr<double>(row);
+        for (int col = 0; col < cols0; col++) {
+            xy_orig.ptr<double>(row)[col] =
+                num2fix_unsigned(ptr[col] / scale, 9);
         }
     }
 
     // floor elements in xy_orig
     cv::Mat xy_orig_int;
-    xy_orig_int = cv::Mat::zeros(xy_orig.rows, xy_orig.cols, CV_64F);
-    for (int row = 0; row < xy_orig.rows; row++) {
-        for (int col = 0; col < xy_orig.cols; col++) {
-            xy_orig_int.at<double>(row, col) =
-                cvFloor(xy_orig.at<double>(row, col));
+    xy_orig_int = cv::Mat::zeros(rows0, cols0, CV_64F);
+    for (int row = 0; row < rows0; row++) {
+        const double* ptr = xy_orig.ptr<double>(row);
+        for (int col = 0; col < cols0; col++) {
+            xy_orig_int.ptr<double>(row)[col] = cvFloor(ptr[col]);
         }
     }
     cv::Mat xy_orig_frac(xy_orig.rows, xy_orig.cols, CV_64F);
@@ -324,10 +328,11 @@ rectBuffer rect_img(const cv::Mat& xOrig2Rect, const cv::Mat& yOrig2Rect,
     prop_idx_mat.copyTo(final_idx, final_flag);
 
     std::vector<std::tuple<int, int>> coordinates;
-    coordinates.reserve(final_idx.rows);
-    for (int i = 0; i < final_idx.rows; i++) {
+    const int f_row = final_idx.rows;
+    coordinates.reserve(f_row);
+    for (int i = 0; i < f_row; i++) {
         // use ind2sub here, not ind2sub_along_y
-        coordinates.emplace_back(ind2sub(nr, nc, final_idx.at<int>(i)));
+        coordinates.emplace_back(ind2sub(nr, nc, *final_idx.ptr<int>(i)));
     }
 
     std::vector<int> ind;
@@ -363,19 +368,20 @@ cv::Mat bilinear_remap(const cv::Mat& img_r, const cv::Mat& img_g,
                 final_xy_orig_int.colRange(1, 2) + 1, bilinear_pix_floor4);
 
     std::vector<int> bilinear_ind1, bilinear_ind2, bilinear_ind3, bilinear_ind4;
-    for (int i = 0; i < final_xy_orig_int.rows; i++) {
+    const int row0 = final_xy_orig_int.rows;
+    for (int i = 0; i < row0; i++) {
         bilinear_ind1.push_back(
-            sub2ind_along_y(nr, nc, (int)bilinear_pix_floor1.at<double>(i, 1),
-                            (int)bilinear_pix_floor1.at<double>(i, 0)));
+            sub2ind_along_y(nr, nc, (int)bilinear_pix_floor1.ptr<double>(i)[1],
+                            (int)bilinear_pix_floor1.ptr<double>(i)[0]));
         bilinear_ind2.push_back(
-            sub2ind_along_y(nr, nc, (int)bilinear_pix_floor2.at<double>(i, 1),
-                            (int)bilinear_pix_floor2.at<double>(i, 0)));
+            sub2ind_along_y(nr, nc, (int)bilinear_pix_floor2.ptr<double>(i)[1],
+                            (int)bilinear_pix_floor2.ptr<double>(i)[0]));
         bilinear_ind3.push_back(
-            sub2ind_along_y(nr, nc, (int)bilinear_pix_floor3.at<double>(i, 1),
-                            (int)bilinear_pix_floor3.at<double>(i, 0)));
+            sub2ind_along_y(nr, nc, (int)bilinear_pix_floor3.ptr<double>(i)[1],
+                            (int)bilinear_pix_floor3.ptr<double>(i)[0]));
         bilinear_ind4.push_back(
-            sub2ind_along_y(nr, nc, (int)bilinear_pix_floor4.at<double>(i, 1),
-                            (int)bilinear_pix_floor4.at<double>(i, 0)));
+            sub2ind_along_y(nr, nc, (int)bilinear_pix_floor4.ptr<double>(i)[1],
+                            (int)bilinear_pix_floor4.ptr<double>(i)[0]));
     }
 
     cv::Mat coeff1 = (1 - final_xy_orig_frac.colRange(1, 2))
@@ -387,11 +393,16 @@ cv::Mat bilinear_remap(const cv::Mat& img_r, const cv::Mat& img_g,
     cv::Mat coeff4 = (final_xy_orig_frac.colRange(1, 2))
                          .mul(final_xy_orig_frac.colRange(0, 1));
 
-    for (int i = 0; i < coeff1.rows; i++) {
-        coeff1.at<double>(i, 0) = num2fix_unsigned(coeff1.at<double>(i, 0), 9);
-        coeff2.at<double>(i, 0) = num2fix_unsigned(coeff2.at<double>(i, 0), 9);
-        coeff3.at<double>(i, 0) = num2fix_unsigned(coeff3.at<double>(i, 0), 9);
-        coeff4.at<double>(i, 0) = num2fix_unsigned(coeff4.at<double>(i, 0), 9);
+    const int row1 = coeff1.rows;
+    for (int i = 0; i < row1; i++) {
+        coeff1.ptr<double>(i)[0] =
+            num2fix_unsigned(coeff1.ptr<double>(i)[0], 9);
+        coeff2.ptr<double>(i)[0] =
+            num2fix_unsigned(coeff2.ptr<double>(i)[0], 9);
+        coeff3.ptr<double>(i)[0] =
+            num2fix_unsigned(coeff3.ptr<double>(i)[0], 9);
+        coeff4.ptr<double>(i)[0] =
+            num2fix_unsigned(coeff4.ptr<double>(i)[0], 9);
     }
 
     // for (int i = 0; i < coeff2.rows; i++) {
@@ -433,7 +444,8 @@ cv::Mat bilinear_remap(const cv::Mat& img_r, const cv::Mat& img_g,
     g_rect = cv::Mat::zeros(nr, nc, CV_8UC1);
     b_rect = cv::Mat::zeros(nr, nc, CV_8UC1);
 
-    for (int i = 0; i < ind.size(); i++) {
+    const int row2 = (int)ind.size();
+    for (int i = 0; i < row2; i++) {
         b_rect.at<uint8_t>(ind[i]) =
             floor(coord1_b[i] + coord2_b[i] + coord3_b[i] + coord4_b[i]);
         g_rect.at<uint8_t>(ind[i]) =
@@ -452,9 +464,10 @@ cv::Mat bilinear_remap(const cv::Mat& img_r, const cv::Mat& img_g,
 void coordinate_generator(std::vector<double>& vec, cv::Mat coeff,
                           cv::Mat img_ch, std::vector<int> index,
                           int frac_len) {
-    for (int i = 0; i < coeff.rows; i++) {
+    const int row = coeff.rows;
+    for (int i = 0; i < row; i++) {
         vec.emplace_back(num2fix_unsigned(
-            coeff.at<double>(i, 0) * double(img_ch.at<uint8_t>(index[i])),
+            coeff.ptr<double>(i)[0] * double(img_ch.at<uint8_t>(index[i])),
             frac_len));
     }
 }
