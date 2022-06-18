@@ -42,7 +42,8 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
         index++;
     }
 
-    const double thr1 = pow(2, 14), thr2 = pow(2, 13);
+    const int t = int_len + frac_len;
+    const double thr1 = pow(2, t), thr2 = pow(2, t - 1);
 
     for (double& i : raw2rectSampleX) {
         if (i > 2 * max_diff) {
@@ -199,9 +200,9 @@ void lut_parser(const std::string& lut_file, int int_len, int frac_len,
      * do the same thing for rect to raw
      **/
     // get the length of int and frac
-    int rect2raw_int_len = int_len;
+    int rect2raw_int_len = int_len - 1; // exclude sign biy
     // why we do this?????????????????????????????/
-    if (int_len == 9) rect2raw_int_len = 8;
+    // if (int_len == 9) rect2raw_int_len = 8;
     int rect2raw_frac_len = frac_len;
     int rect2raw_world_len = rect2raw_int_len + rect2raw_frac_len;
     std::vector<double> rect2raw_delta_sample;
