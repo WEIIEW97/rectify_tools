@@ -19,14 +19,14 @@ include_directories("/usr/local/Cellar/eigen/3.4.0_1/include/eigen3/")
 
 add_executable(cpp
 src/utils.h
-src/utils.cpp
+src/utils.cc
 src/rect_img.h
-src/rect_img.cpp
+src/rect_img.cc
 src/lut_parser.h
-src/lut_parser.cpp
+src/lut_parser.cc
 src/use_lut.h
-src/use_lut.cpp
-run.cpp
+src/use_lut.cc
+run.cc
 )
 
 target_link_libraries(cpp ${OpenCV_LIBS})
