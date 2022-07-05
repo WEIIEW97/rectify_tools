@@ -26,6 +26,8 @@ src/lut_parser.h
 src/lut_parser.cc
 src/use_lut.h
 src/use_lut.cc
+src/gen_lut.h
+src/gen_lut.cc
 run.cc
 )
 

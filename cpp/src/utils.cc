@@ -128,20 +128,169 @@ bool ismember(double num, std::vector<double> vec) {
 }
 
 // extract y, u, v channels respectivily from a 3-channel image
-void get_yuv(const std::string& yuv_file, int width, int height, cv::Mat& y,
-             cv::Mat& u, cv::Mat& v) {
-    std::ifstream file(yuv_file, std::ios::binary);
-    if (!file.is_open()) {
-        std::cout << "Cannot open file: " << yuv_file << std::endl;
-        exit(1);
+// void get_yuv(const std::string& yuv_file, int width, int height, cv::Mat& y,
+//              cv::Mat& u, cv::Mat& v) {
+//     std::ifstream file(yuv_file, std::ios::binary);
+//     if (!file.is_open()) {
+//         std::cout << "Cannot open file: " << yuv_file << std::endl;
+//         exit(1);
+//     }
+//     y.create(height, width, CV_8UC1);
+//     u.create(height / 2, width / 2, CV_8UC1);
+//     v.create(height / 2, width / 2, CV_8UC1);
+//     file.read((char*)y.data, y.total() * y.elemSize());
+//     file.read((char*)u.data, u.total() * u.elemSize());
+//     file.read((char*)v.data, v.total() * v.elemSize());
+//     file.close();
+// }
+
+// read yuv file
+unsigned char* readyuv(std::string in_path, int w, int h, SFmt fmt) {
+    FILE* fp;
+    if (NULL == (fp = fopen(in_path.c_str(), "rb"))) {
+        printf("Cannot open file: %s\n", in_path.c_str());
+        fclose(fp);
+        return nullptr;
     }
-    y.create(height, width, CV_8UC1);
-    u.create(height / 2, width / 2, CV_8UC1);
-    v.create(height / 2, width / 2, CV_8UC1);
-    file.read((char*)y.data, y.total() * y.elemSize());
-    file.read((char*)u.data, u.total() * u.elemSize());
-    file.read((char*)v.data, v.total() * v.elemSize());
-    file.close();
+    int buf_len = 0;
+    if (fmt == YUV444) {
+        buf_len = w * h * 3;
+    } else if (fmt == YUV420) {
+        buf_len = w * h * 3 / 2;
+    }
+    unsigned char* yuv_buf = new unsigned char[buf_len];
+    fread(yuv_buf, buf_len * sizeof(unsigned char), 1, fp);
+    fclose(fp);
+    return yuv_buf;
+}
+
+void writeyuv(std::string out_path, unsigned char* s, int w, int h, SFmt fmt) {
+    FILE* fp;
+    if (nullptr == (fp = fopen(out_path.c_str(), "wb"))) {
+        printf("Cannot open file: %s\n", out_path.c_str());
+        fclose(fp);
+        return;
+    }
+
+    int buf_len = 0;
+    if (fmt == YUV444) {
+        buf_len = w * h * 3;
+    } else if (fmt == YUV420) {
+        buf_len = w * h * 3 / 2;
+    }
+    fwrite(s, buf_len * sizeof(unsigned char), 1, fp);
+    fclose(fp);
+}
+
+void nv12_to_yuv444(unsigned char* in, unsigned char* out, int w, int h) {
+    unsigned char *srcy = nullptr, *srcu = nullptr, *srcv = nullptr;
+    unsigned char *dsty = nullptr, *dstu = nullptr, *dstv = nullptr;
+    srcy = in;
+    srcu = srcy + w * h;
+    srcv = srcu + w * h / 4;
+
+    dsty = out;
+    dstu = dsty + w * h;
+    dstv = dstu + w * h;
+    memcpy(dsty, srcy, w * h * sizeof(unsigned char));
+
+    size_t i, j;
+    for (i = 0; i < h; i += 2) {
+        for (j = 0; j < w; j += 2) {
+            unsigned char s2du = srcu[i / 2 * w / 2 + j / 2];
+            dstu[i * w + j] = s2du;
+            dstu[i * w + j + 1] = s2du;
+            dstu[(i + 1) * w + j] = s2du;
+            dstu[(i + 1) * w + j + 1] = s2du;
+
+            unsigned char s2dv = srcv[i / 2 * w / 2 + j / 2];
+            dstv[i * w + j] = s2dv;
+            dstv[i * w + j + 1] = s2dv;
+            dstv[(i + 1) * w + j] = s2dv;
+            dstv[(i + 1) * w + j + 1] = s2dv;
+        }
+    }
+}
+
+void yuv444_to_nv12(unsigned char* in, unsigned char* out, int w, int h) {
+    unsigned char *srcy = nullptr, *srcu = nullptr, *srcv = nullptr;
+    unsigned char *dsty = nullptr, *dstuv = nullptr;
+    srcy = in;
+    srcu = srcy + w * h;
+    srcv = srcu + w * h;
+
+    dsty = out;
+    dstuv = dsty + w * h;
+    // dstv = dst + w * h / 2;
+
+    // int w_half = w / 2;
+    // int h_half = h / 2;
+    memcpy(dsty, srcy, w * h * sizeof(unsigned char));
+
+    size_t i, j;
+    int idx = 0;
+    for (i = 0; i < h; i+=2) {
+        for (j = 0; j < w; j+=2) {
+            dstuv[idx] = srcu[i * w + j];
+            idx++;
+            dstuv[idx] = srcv[i * w + j];
+            idx++;
+        }
+    }
+}
+
+unsigned char* convert_yuv(unsigned char* inbuf, int w, int h, CFmt cf) {
+    int buf_len = 0;
+    if (cf == YUV420toYUV444) {
+        buf_len = w * h * 3;
+        unsigned char* p_dst = new unsigned char[buf_len];
+        nv12_to_yuv444(inbuf, p_dst, w, h);
+        return p_dst;
+    } else {
+        buf_len = w * h * 3 / 2;
+        unsigned char* p_dst = new unsigned char[buf_len];
+        yuv444_to_nv12(inbuf, p_dst, w, h);
+        return p_dst;
+    }
+}
+
+cv::Mat yuv2mat(unsigned char* inbuf, int w, int h, SFmt fmt) {
+    if (fmt == YUV444) {
+        cv::Mat dst = cv::Mat::zeros(h, w, CV_8UC3);
+        std::vector<cv::Mat> channels;
+        cv::split(dst, channels);
+        channels.at(0).data = (unsigned char*)inbuf;
+        channels.at(1).data = (unsigned char*)inbuf + w * h;
+        channels.at(2).data = (unsigned char*)inbuf + w * h * 2;
+        cv::merge(channels, dst);
+        return dst;
+    } else {
+        int buf_len = w * h * 3 / 2;
+        cv::Mat dst = cv::Mat::zeros(h * 3 / 2, w, CV_8UC1);
+        memcpy(dst.data, inbuf, buf_len * sizeof(unsigned char));
+        return dst;
+    }
+}
+
+unsigned char* mat2yuv(cv::Mat src, SFmt fmt) {
+    int w = src.cols;
+    int h = src.rows;
+    if (fmt == YUV444) {
+        int buf_len = w * h * 3;
+        int buf_c = w * h;
+        unsigned char* p_dst = new unsigned char[buf_len];
+        std::vector<cv::Mat> channels;
+        cv::split(src, channels);
+        memcpy(p_dst, channels.at(0).data, buf_c * sizeof(unsigned char));
+        memcpy(p_dst + w * h, channels.at(1).data, buf_c * sizeof(unsigned char));
+        memcpy(p_dst + w * h * 2, channels.at(2).data, buf_c * sizeof(unsigned char));
+        return p_dst;
+    } else {
+        int buf_len = src.total();
+        unsigned char* p_dst = new unsigned char[buf_len];
+        memcpy(p_dst, src.data, buf_len * sizeof(unsigned char));
+        return p_dst;
+    }
 }
 
 // get opencv mat type name
@@ -199,14 +348,15 @@ void show_img(cv::Mat img, std::string win_name) {
     cv::destroyWindow(win_name);
 }
 
-void show_bilinear_img(int row, int col, const std::vector<int>& unrect_idx,
-                       std::string win_name) {
+cv::Mat show_bilinear_img(int row, int col,
+                          const std::vector<int>& unrect_idx) {
     cv::Mat bi_linear;
     bi_linear = cv::Mat::ones(row, col, CV_8UC1) * 255;
     for (auto i : unrect_idx) {
         bi_linear.at<uint8_t>(i) = 0;
     }
-    show_img(bi_linear, win_name);
+    // show_img(bi_linear, win_name);
+    return bi_linear;
 }
 
 std::vector<int> get_unrect_idx(int row, int col,
@@ -221,7 +371,7 @@ std::vector<int> get_unrect_idx(int row, int col,
         rect_set.insert(j);
     }
 
-    for (int & k : img_idx) {
+    for (int& k : img_idx) {
         if (rect_set.find(k) == rect_set.end()) {
             unrect_idx.emplace_back(k);
         }

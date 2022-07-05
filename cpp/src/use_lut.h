@@ -9,7 +9,7 @@
 #define RECT_IMG_WINNAME "rect_img"
 
 void use_lut(int row, int col, int int_len, int frac_len,
-             const std::string& lut_file, const std::string& yuv_path,
-             const std::string& out_path, bool show_bi_img);
+             const std::string& lut_file, const std::string& in_path,
+             const std::string& out_path, bool show_bi_img, bool is_rgb);
 
 #endif  // USE_LUT_H_
