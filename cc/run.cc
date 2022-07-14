@@ -15,7 +15,6 @@ int main() {
     const int int_len = 9;
     const int frac_len = 5;
 
-
     clock_t start = clock();
     use_lut(row, col, int_len, frac_len, lut_file, in_path, output_image_file,
             false, false);

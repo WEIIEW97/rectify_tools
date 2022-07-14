@@ -6,7 +6,7 @@
 #include "utils.h"
 
 #define BILINEAR_IMG_WINNAME "bilinear_img"
-#define RECT_IMG_WINNAME "rect_img"
+#define RECT_IMG_WINNAME     "rect_img"
 
 void use_lut(int row, int col, int int_len, int frac_len,
              const std::string& lut_file, const std::string& in_path,

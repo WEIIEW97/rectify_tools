@@ -1,11 +1,11 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <math.h>
 #include <time.h>
 
 #include <Eigen/Dense>
 #include <algorithm>  // for copy
-#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -18,18 +18,12 @@
 #include <unordered_set>
 #include <vector>
 
-#define SIGN_BIT 0x80000000
+#define SIGN_BIT        0x80000000
 #define SIGN_BIT_IGNORE 0x7fffffff
 
-enum CFmt {
-    YUV444toYUV420,
-    YUV420toYUV444
-};
+enum CFmt { YUV444toYUV420, YUV420toYUV444 };
 
-enum SFmt {
-    YUV444,
-    YUV420
-};
+enum SFmt { YUV444, YUV420 };
 
 Eigen::MatrixXd normc(Eigen::MatrixXd x);
 
@@ -83,4 +77,4 @@ cv::Mat show_bilinear_img(int row, int col, const std::vector<int>& unrect_idx);
 std::vector<int> get_unrect_idx(int row, int col,
                                 const std::vector<int>& rect_idx);
 
-#endif // UTILS_H_
+#endif  // UTILS_H_

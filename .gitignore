@@ -1,12 +1,12 @@
 # Build Folder
-/cpp/build
-/cpp/cmake-build-debug
-/cpp/cmake-build-release
-/cpp/data
+/cc/build
+/cc/cmake-build-debug
+/cc/cmake-build-release
+/cc/data
 
 # Idea Folder
-/cpp/.idea
-/cpp/.vscode
+/cc/.idea
+/cc/.vscode
 
 # matlab code
 /matlab
