@@ -154,15 +154,6 @@ std::tuple<int, int> ind2sub_along_y(int w, int h, int ind) {
   return std::make_tuple(rows, cols);
 }
 
-template <typename Tp>
-bool ismember(Tp num, std::vector<Tp> vec) {
-  if (std::binary_search(vec.begin(), vec.end(), num)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 // extract y, u, v channels respectivily from a 3-channel image
 // void get_yuv(const std::string& yuv_file, int width, int height, cv::Mat& y,
 //              cv::Mat& u, cv::Mat& v) {
@@ -418,12 +409,3 @@ std::vector<int> get_unrect_idx(int row,
   return unrect_idx;
 }
 
-template <typename Tp>
-void save_vector_to_txt(const char* path, std::vector<Tp> src) {
-  FILE* stream;
-  stream = fopen(path, "w");
-  for (auto i : src) {
-    fprintf(stream, "%u\n", i);
-  }
-  fclose(stream);
-}

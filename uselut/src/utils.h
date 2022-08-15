@@ -92,7 +92,13 @@ std::tuple<int, int> ind2sub(int w, int h, int ind);
 std::tuple<int, int> ind2sub_along_y(int w, int h, int ind);
 
 template <typename Tp>
-bool ismember(Tp num, std::vector<Tp> vec);
+bool ismember(Tp num, std::vector<Tp> vec) {
+  if (std::binary_search(vec.begin(), vec.end(), num)) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 unsigned char* readyuv(std::string in_path, int w, int h, SFmt fmt);
 
@@ -128,6 +134,14 @@ std::vector<int> get_unrect_idx(int row,
                                 int col,
                                 const std::vector<int>& rect_idx);
 
+
 template <typename Tp>
-void save_vector_to_txt(const char* path, std::vector<Tp> src);
+void save_vector_to_txt(const char* path, std::vector<Tp> src) {
+  FILE* stream;
+  stream = fopen(path, "w");
+  for (auto i : src) {
+    fprintf(stream, "%u\n", i);
+  }
+  fclose(stream);
+}
 #endif  // UTILS_H_
