@@ -1,0 +1,24 @@
+# Build Folder
+/uselut/build
+/uselut/cmake-build-debug
+/uselut/out
+/uselut/.cache
+
+/genlut/build
+/genlut/cmake-build-debug
+/genlut/out
+/genlut/.cache
+
+# Idea Folder
+/uselut/.idea
+/uselut/.vscode
+/uselut/.vs
+
+/genlut/.idea
+/genlut/.vscode
+/genlut/.vs
+
+/build
+
+
+

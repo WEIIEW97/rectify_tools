@@ -1,0 +1,46 @@
+BasedOnStyle: Google
+---
+Language: Cpp
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortLambdasOnASingleLine: Inline
+AlignConsecutiveMacros: true
+BinPackArguments: false
+BinPackParameters: false
+DerivePointerAlignment: false
+IndentWidth: 2
+UseTab: Never
+IncludeCategories:
+  - Regex: '^"(llvm|llvm-c|clang|clang-c)/'
+    Priority: 2
+  - Regex: '^((<|")(gtest|gmock|isl|json)/)'
+    Priority: 3
+  - Regex: "^<gsl/.*>"
+    Priority: 4
+  - Regex: "^<.*/.*>"
+    Priority: 5
+  - Regex: "^<[[:alnum:]_]+>"
+    Priority: 4
+  - Regex: "^<.*"
+    Priority: 5
+  - Regex: '^".*'
+    Priority: 1
+IndentRequires: true
+PackConstructorInitializers: NextLine
+PointerAlignment: Left
+# QualifierAlignment: Custom
+# QualifierOrder:
+#   [
+#     "inline",
+#     "static",
+#     "constexpr",
+#     "type",
+#     "restrict",
+#     "const",
+#     "volatile",
+#   ]
+ReferenceAlignment: Pointer
+ReflowComments: false
+ShortNamespaceLines: 0
+---
+
+
